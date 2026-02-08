@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  beads-web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - BEADS_PROJECT_PATH=/data/project
+    volumes:
+      # Mount your Beads-enabled project directory
+      - ${PROJECT_DIR:-./}:/data/project:ro
+    restart: unless-stopped

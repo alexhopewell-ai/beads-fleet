@@ -45,13 +45,22 @@ function getProjectPath(): string {
   return p;
 }
 
+/**
+ * Resolve the project path to use. If an override is provided, use it.
+ * Otherwise fall back to the env var.
+ */
+function resolveProjectPath(override?: string): string {
+  if (override) return override;
+  return getProjectPath();
+}
+
 // -----------------------------------------------------------------------------
 // Low-level bv execution
 // -----------------------------------------------------------------------------
 
-async function execBv(args: string[]): Promise<string> {
+async function execBv(args: string[], projectPath?: string): Promise<string> {
   const { stdout } = await execFile(getBvPath(), args, {
-    cwd: getProjectPath(),
+    cwd: resolveProjectPath(projectPath),
     timeout: 30_000,
     maxBuffer: 10 * 1024 * 1024,
     env: { ...process.env, NO_COLOR: "1" },
@@ -79,24 +88,25 @@ const CACHE_KEY_PRIORITY = "bv:priority";
  * Fetch graph-based insights from `bv --robot-insights`.
  * Falls back to an empty structure if bv is unavailable.
  */
-export async function getInsights(): Promise<RobotInsights> {
-  const cached = cache.get<RobotInsights>(CACHE_KEY_INSIGHTS);
+export async function getInsights(projectPath?: string): Promise<RobotInsights> {
+  const resolvedPath = resolveProjectPath(projectPath);
+  const cacheKey = `${CACHE_KEY_INSIGHTS}:${resolvedPath}`;
+  const cached = cache.get<RobotInsights>(cacheKey);
   if (cached) return cached;
 
   try {
-    const stdout = await execBv(["--robot-insights"]);
+    const stdout = await execBv(["--robot-insights"], resolvedPath);
     const data = JSON.parse(stdout) as RobotInsights;
-    cache.set(CACHE_KEY_INSIGHTS, data);
+    cache.set(cacheKey, data);
     return data;
   } catch (error) {
     if (isBvNotFoundError(error)) {
-      const fallback = emptyInsights(getProjectPath());
-      cache.set(CACHE_KEY_INSIGHTS, fallback);
+      const fallback = emptyInsights(resolvedPath);
+      cache.set(cacheKey, fallback);
       return fallback;
     }
-    // For other errors (parse failure, non-zero exit), also fall back
-    const fallback = emptyInsights(getProjectPath());
-    cache.set(CACHE_KEY_INSIGHTS, fallback);
+    const fallback = emptyInsights(resolvedPath);
+    cache.set(cacheKey, fallback);
     return fallback;
   }
 }
@@ -105,28 +115,27 @@ export async function getInsights(): Promise<RobotInsights> {
  * Fetch the full plan from `bv --robot-plan`.
  * Falls back to JSONL-based plan if bv is unavailable.
  */
-export async function getPlan(): Promise<RobotPlan> {
-  const cached = cache.get<RobotPlan>(CACHE_KEY_PLAN);
+export async function getPlan(projectPath?: string): Promise<RobotPlan> {
+  const resolvedPath = resolveProjectPath(projectPath);
+  const cacheKey = `${CACHE_KEY_PLAN}:${resolvedPath}`;
+  const cached = cache.get<RobotPlan>(cacheKey);
   if (cached) return cached;
 
   try {
-    const stdout = await execBv(["--robot-plan"]);
+    const stdout = await execBv(["--robot-plan"], resolvedPath);
     const data = JSON.parse(stdout) as RobotPlan;
-    cache.set(CACHE_KEY_PLAN, data);
+    cache.set(cacheKey, data);
     return data;
   } catch (error) {
     if (isBvNotFoundError(error)) {
-      const projectPath = getProjectPath();
-      const issues = await readIssuesFromJSONL(projectPath);
-      const fallback = issuesToPlan(issues, projectPath);
-      cache.set(CACHE_KEY_PLAN, fallback);
+      const issues = await readIssuesFromJSONL(resolvedPath);
+      const fallback = issuesToPlan(issues, resolvedPath);
+      cache.set(cacheKey, fallback);
       return fallback;
     }
-    // For other errors, also try JSONL fallback
-    const projectPath = getProjectPath();
-    const issues = await readIssuesFromJSONL(projectPath);
-    const fallback = issuesToPlan(issues, projectPath);
-    cache.set(CACHE_KEY_PLAN, fallback);
+    const issues = await readIssuesFromJSONL(resolvedPath);
+    const fallback = issuesToPlan(issues, resolvedPath);
+    cache.set(cacheKey, fallback);
     return fallback;
   }
 }
@@ -135,23 +144,25 @@ export async function getPlan(): Promise<RobotPlan> {
  * Fetch priority recommendations from `bv --robot-priority`.
  * Falls back to an empty structure if bv is unavailable.
  */
-export async function getPriority(): Promise<RobotPriority> {
-  const cached = cache.get<RobotPriority>(CACHE_KEY_PRIORITY);
+export async function getPriority(projectPath?: string): Promise<RobotPriority> {
+  const resolvedPath = resolveProjectPath(projectPath);
+  const cacheKey = `${CACHE_KEY_PRIORITY}:${resolvedPath}`;
+  const cached = cache.get<RobotPriority>(cacheKey);
   if (cached) return cached;
 
   try {
-    const stdout = await execBv(["--robot-priority"]);
+    const stdout = await execBv(["--robot-priority"], resolvedPath);
     const data = JSON.parse(stdout) as RobotPriority;
-    cache.set(CACHE_KEY_PRIORITY, data);
+    cache.set(cacheKey, data);
     return data;
   } catch (error) {
     if (isBvNotFoundError(error)) {
-      const fallback = emptyPriority(getProjectPath());
-      cache.set(CACHE_KEY_PRIORITY, fallback);
+      const fallback = emptyPriority(resolvedPath);
+      cache.set(cacheKey, fallback);
       return fallback;
     }
-    const fallback = emptyPriority(getProjectPath());
-    cache.set(CACHE_KEY_PRIORITY, fallback);
+    const fallback = emptyPriority(resolvedPath);
+    cache.set(cacheKey, fallback);
     return fallback;
   }
 }
@@ -160,20 +171,21 @@ export async function getPriority(): Promise<RobotPriority> {
  * Fetch diff since a git reference from `bv --robot-diff --diff-since <since>`.
  * No good JSONL fallback exists, so returns an empty changes list on failure.
  */
-export async function getDiff(since: string): Promise<RobotDiff> {
-  const cacheKey = `bv:diff:${since}`;
+export async function getDiff(since: string, projectPath?: string): Promise<RobotDiff> {
+  const resolvedPath = resolveProjectPath(projectPath);
+  const cacheKey = `bv:diff:${since}:${resolvedPath}`;
   const cached = cache.get<RobotDiff>(cacheKey);
   if (cached) return cached;
 
   try {
-    const stdout = await execBv(["--robot-diff", "--diff-since", since]);
+    const stdout = await execBv(["--robot-diff", "--diff-since", since], resolvedPath);
     const data = JSON.parse(stdout) as RobotDiff;
     cache.set(cacheKey, data);
     return data;
   } catch {
     const fallback: RobotDiff = {
       timestamp: new Date().toISOString(),
-      project_path: getProjectPath(),
+      project_path: resolvedPath,
       since_ref: since,
       new_count: 0,
       closed_count: 0,
@@ -200,6 +212,30 @@ export async function checkBvAvailable(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Get a single issue by ID. Reads from the plan data.
+ */
+export async function getIssueById(
+  issueId: string,
+  projectPath?: string,
+): Promise<{ plan_issue: import("./types").PlanIssue; raw_issue: import("./types").BeadsIssue | null }> {
+  const resolvedPath = resolveProjectPath(projectPath);
+  const plan = await getPlan(resolvedPath);
+  const planIssue = plan.all_issues.find((i) => i.id === issueId);
+  if (!planIssue) throw new Error(`Issue not found: ${issueId}`);
+
+  // Try to get the full raw issue from JSONL for description/comments
+  let rawIssue: import("./types").BeadsIssue | null = null;
+  try {
+    const allRaw = await readIssuesFromJSONL(resolvedPath);
+    rawIssue = allRaw.find((i) => i.id === issueId) ?? null;
+  } catch {
+    // JSONL read failed, that's OK
+  }
+
+  return { plan_issue: planIssue, raw_issue: rawIssue };
 }
 
 /**

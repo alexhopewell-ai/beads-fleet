@@ -1,0 +1,134 @@
+// =============================================================================
+// Beads Web — Multi-Repository Configuration
+// =============================================================================
+//
+// Manages a list of Beads-enabled repositories. Stored as a JSON file at
+// ~/.beads-web.json. The first repo in the list (or the one matching
+// BEADS_PROJECT_PATH) is the default active repo.
+// =============================================================================
+
+import { promises as fs } from "fs";
+import path from "path";
+import os from "os";
+
+export interface RepoConfig {
+  name: string;
+  path: string;
+}
+
+export interface RepoStore {
+  repos: RepoConfig[];
+  activeRepo?: string; // path of the currently active repo
+}
+
+const CONFIG_PATH = path.join(os.homedir(), ".beads-web.json");
+
+async function readConfig(): Promise<RepoStore> {
+  try {
+    const content = await fs.readFile(CONFIG_PATH, "utf-8");
+    return JSON.parse(content) as RepoStore;
+  } catch {
+    return { repos: [] };
+  }
+}
+
+async function writeConfig(store: RepoStore): Promise<void> {
+  await fs.writeFile(CONFIG_PATH, JSON.stringify(store, null, 2), "utf-8");
+}
+
+/**
+ * Get all configured repositories. If none are configured, seeds with
+ * the BEADS_PROJECT_PATH env var (if set).
+ */
+export async function getRepos(): Promise<RepoStore> {
+  const store = await readConfig();
+
+  // Seed from env var if no repos configured
+  if (store.repos.length === 0 && process.env.BEADS_PROJECT_PATH) {
+    const envPath = process.env.BEADS_PROJECT_PATH;
+    const name = path.basename(envPath);
+    store.repos.push({ name, path: envPath });
+    store.activeRepo = envPath;
+    await writeConfig(store);
+  }
+
+  return store;
+}
+
+/**
+ * Get the currently active project path. Falls back to BEADS_PROJECT_PATH
+ * if no active repo is set.
+ */
+export async function getActiveProjectPath(): Promise<string> {
+  const store = await readConfig();
+
+  if (store.activeRepo) return store.activeRepo;
+  if (store.repos.length > 0) return store.repos[0].path;
+  if (process.env.BEADS_PROJECT_PATH) return process.env.BEADS_PROJECT_PATH;
+
+  throw new Error(
+    "No repository configured. Set BEADS_PROJECT_PATH or add a repo via Settings.",
+  );
+}
+
+/**
+ * Add a repository to the config.
+ */
+export async function addRepo(repoPath: string, name?: string): Promise<RepoStore> {
+  const store = await readConfig();
+  const resolvedPath = path.resolve(repoPath);
+
+  // Check if already exists
+  if (store.repos.some((r) => r.path === resolvedPath)) {
+    return store;
+  }
+
+  // Verify .beads directory exists
+  try {
+    await fs.access(path.join(resolvedPath, ".beads"));
+  } catch {
+    throw new Error(`No .beads directory found at ${resolvedPath}`);
+  }
+
+  const repoName = name || path.basename(resolvedPath);
+  store.repos.push({ name: repoName, path: resolvedPath });
+
+  if (!store.activeRepo) {
+    store.activeRepo = resolvedPath;
+  }
+
+  await writeConfig(store);
+  return store;
+}
+
+/**
+ * Remove a repository from the config.
+ */
+export async function removeRepo(repoPath: string): Promise<RepoStore> {
+  const store = await readConfig();
+  const resolvedPath = path.resolve(repoPath);
+  store.repos = store.repos.filter((r) => r.path !== resolvedPath);
+
+  if (store.activeRepo === resolvedPath) {
+    store.activeRepo = store.repos[0]?.path;
+  }
+
+  await writeConfig(store);
+  return store;
+}
+
+/**
+ * Set the active repository.
+ */
+export async function setActiveRepo(repoPath: string): Promise<RepoStore> {
+  const store = await readConfig();
+  const resolvedPath = path.resolve(repoPath);
+
+  if (!store.repos.some((r) => r.path === resolvedPath)) {
+    throw new Error(`Repository not found: ${resolvedPath}`);
+  }
+
+  store.activeRepo = resolvedPath;
+  await writeConfig(store);
+  return store;
+}

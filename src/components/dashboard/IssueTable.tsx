@@ -2,7 +2,10 @@
 
 import { useState, useMemo } from "react";
 import type { PlanIssue } from "@/lib/types";
+import type { FilterCriteria } from "@/lib/recipes";
+import { applyFilter, BUILT_IN_VIEWS } from "@/lib/recipes";
 import { IssueCard } from "@/components/ui/IssueCard";
+import { FilterBar } from "@/components/filters/FilterBar";
 
 type SortKey = "id" | "title" | "status" | "priority" | "owner" | "blocked_by";
 type SortDir = "asc" | "desc";
@@ -39,10 +42,16 @@ function comparePlanIssues(a: PlanIssue, b: PlanIssue, key: SortKey): number {
   }
 }
 
+// Default view: "All Issues" built-in view
+const DEFAULT_VIEW = BUILT_IN_VIEWS[0];
+
 export function IssueTable({ issues }: IssueTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("priority");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [showClosed, setShowClosed] = useState(false);
+  const [filter, setFilter] = useState<FilterCriteria>(
+    DEFAULT_VIEW.filter,
+  );
+  const [activeViewId, setActiveViewId] = useState<string>(DEFAULT_VIEW.id);
 
   const handleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -54,15 +63,13 @@ export function IssueTable({ issues }: IssueTableProps) {
   };
 
   const sortedIssues = useMemo(() => {
-    const filtered = showClosed
-      ? issues
-      : issues.filter((issue) => issue.status !== "closed");
+    const filtered = applyFilter(issues, filter);
 
     return [...filtered].sort((a, b) => {
       const cmp = comparePlanIssues(a, b, sortKey);
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [issues, sortKey, sortDir, showClosed]);
+  }, [issues, filter, sortKey, sortDir]);
 
   const sortIndicator = (key: SortKey) => {
     if (key !== sortKey) return null;
@@ -77,16 +84,17 @@ export function IssueTable({ issues }: IssueTableProps) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-white">Issues</h2>
-        <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showClosed}
-            onChange={(e) => setShowClosed(e.target.checked)}
-            className="rounded border-gray-600 bg-surface-2 text-blue-500 focus:ring-blue-500/30"
-          />
-          Show closed
-        </label>
+        <span className="text-sm text-gray-400">
+          {sortedIssues.length} of {issues.length} issues
+        </span>
       </div>
+
+      <FilterBar
+        filter={filter}
+        onFilterChange={setFilter}
+        activeViewId={activeViewId}
+        onViewChange={setActiveViewId}
+      />
 
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
@@ -113,7 +121,7 @@ export function IssueTable({ issues }: IssueTableProps) {
         </table>
         {sortedIssues.length === 0 && (
           <p className="text-center text-gray-500 py-8 text-sm">
-            No issues to display.
+            No issues match the current filters.
           </p>
         )}
       </div>
@@ -125,7 +133,7 @@ export function IssueTable({ issues }: IssueTableProps) {
         ))}
         {sortedIssues.length === 0 && (
           <p className="text-center text-gray-500 py-8 text-sm">
-            No issues to display.
+            No issues match the current filters.
           </p>
         )}
       </div>

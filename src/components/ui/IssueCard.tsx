@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { PlanIssue } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
 import { PriorityIndicator } from "./PriorityIndicator";
@@ -16,9 +18,18 @@ export function IssueCard({
   variant = "card",
   onClick,
 }: IssueCardProps) {
-  const handleClick = () => onClick?.(issue.id);
+  const router = useRouter();
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick(issue.id);
+    } else {
+      router.push(`/issue/${issue.id}`);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") onClick?.(issue.id);
+    if (e.key === "Enter") handleClick();
   };
 
   if (variant === "row") {
@@ -46,7 +57,7 @@ export function IssueCard({
           <PriorityIndicator priority={issue.priority} />
         </td>
         <td className="px-3 py-2 text-sm text-gray-400">
-          {issue.owner ?? "—"}
+          {issue.owner ?? "\u2014"}
         </td>
         <td className="px-3 py-2 text-sm">
           {issue.blocked_by.length > 0 ? (
@@ -61,14 +72,9 @@ export function IssueCard({
     );
   }
 
-  return (
-    <div
-      className="card-hover p-3 cursor-pointer"
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={0}
-    >
+  // Card variant: use <Link> wrapper when there is no custom onClick handler
+  const cardContent = (
+    <>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <IssueTypeIcon type={issue.issue_type} />
@@ -99,6 +105,29 @@ export function IssueCard({
           {issue.owner && <span>{issue.owner}</span>}
         </div>
       </div>
-    </div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <div
+        className="card-hover p-3 cursor-pointer"
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+      >
+        {cardContent}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={`/issue/${issue.id}`}
+      className="card-hover p-3 cursor-pointer block"
+    >
+      {cardContent}
+    </Link>
   );
 }

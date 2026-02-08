@@ -1,17 +1,28 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { KanbanBoard } from "@/components/board/KanbanBoard";
 import { IssueDetailPanel } from "@/components/board/IssueDetailPanel";
+import { FilterBar } from "@/components/filters/FilterBar";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { CardSkeleton } from "@/components/ui/LoadingSkeleton";
 import { useIssues } from "@/hooks/useIssues";
-import { useState } from "react";
+import type { FilterCriteria } from "@/lib/recipes";
+import { applyFilter } from "@/lib/recipes";
 
 export default function BoardPage() {
   const { data, isLoading, error, refetch } = useIssues();
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterCriteria>({});
+  const [activeViewId, setActiveViewId] = useState<string>("");
 
-  const allIssues = data?.all_issues ?? [];
+  const allIssues = useMemo(() => data?.all_issues ?? [], [data]);
+
+  const filteredIssues = useMemo(
+    () => applyFilter(allIssues, filter),
+    [allIssues, filter],
+  );
+
   const selectedIssue = selectedIssueId
     ? allIssues.find((i) => i.id === selectedIssueId) ?? null
     : null;
@@ -22,10 +33,19 @@ export default function BoardPage() {
         <h1 className="text-2xl font-bold text-white">Board</h1>
         {data && (
           <span className="text-sm text-gray-400">
-            {allIssues.length} issues
+            {filteredIssues.length} of {allIssues.length} issues
           </span>
         )}
       </div>
+
+      {data && (
+        <FilterBar
+          filter={filter}
+          onFilterChange={setFilter}
+          activeViewId={activeViewId}
+          onViewChange={setActiveViewId}
+        />
+      )}
 
       {error && (
         <ErrorState
@@ -50,7 +70,7 @@ export default function BoardPage() {
 
       {data && (
         <KanbanBoard
-          issues={allIssues}
+          issues={filteredIssues}
           onSelectIssue={setSelectedIssueId}
         />
       )}
