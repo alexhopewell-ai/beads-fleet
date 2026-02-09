@@ -1,5 +1,5 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { PlanIssue, BeadsIssue } from "@/lib/types";
 
 interface IssueDetailResponse {
@@ -16,5 +16,7 @@ export function useIssueDetail(issueId: string | null) {
       return res.json();
     },
     enabled: !!issueId,
+    refetchInterval: 30_000,
+    placeholderData: keepPreviousData,
   });
 }

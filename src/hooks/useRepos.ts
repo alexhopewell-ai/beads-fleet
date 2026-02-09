@@ -10,6 +10,9 @@ export function useRepos() {
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
       return res.json();
     },
+    // Repo config rarely changes — no polling, only refetch on focus.
+    refetchInterval: false,
+    staleTime: 60_000,
   });
 }
 

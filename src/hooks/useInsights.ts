@@ -1,5 +1,5 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { RobotInsights } from "@/lib/types";
 
 export function useInsights() {
@@ -10,5 +10,7 @@ export function useInsights() {
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
       return res.json();
     },
+    refetchInterval: 60_000,
+    placeholderData: keepPreviousData,
   });
 }

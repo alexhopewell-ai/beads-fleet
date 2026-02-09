@@ -9,10 +9,13 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 10_000,
-            refetchInterval: 30_000,
+            staleTime: 15_000,
             refetchOnWindowFocus: true,
+            refetchIntervalInBackground: false,
             retry: 2,
+            // structuralSharing is on by default — React Query only
+            // triggers re-renders when data actually changes, preventing
+            // unnecessary UI updates during polling.
           },
         },
       })

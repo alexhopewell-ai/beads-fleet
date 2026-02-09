@@ -1,5 +1,5 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { RobotDiff } from "@/lib/types";
 
 export function useDiff(since: string = "HEAD~10") {
@@ -10,5 +10,9 @@ export function useDiff(since: string = "HEAD~10") {
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
       return res.json();
     },
+    // Diff data is a snapshot — no automatic polling.
+    // Refetches only on window focus or when the ref changes.
+    refetchInterval: false,
+    placeholderData: keepPreviousData,
   });
 }

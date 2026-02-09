@@ -43,7 +43,7 @@ function mockValidProject(): void {
   mockAccess.mockResolvedValue(undefined);
   mockStat.mockResolvedValue({
     isDirectory: () => true,
-  } as ReturnType<typeof import("fs").statSync>);
+  } as unknown as import("fs").Stats);
 }
 
 function mockInvalidProject(): void {
@@ -102,7 +102,7 @@ describe("GET /api/health", () => {
     mockAccess.mockResolvedValue(undefined);
     mockStat.mockResolvedValue({
       isDirectory: () => false,
-    } as ReturnType<typeof import("fs").statSync>);
+    } as unknown as import("fs").Stats);
 
     const response = await GET();
     const body = await response.json();
@@ -122,7 +122,7 @@ describe("GET /api/health", () => {
     mockAccess.mockResolvedValue(undefined);
     mockStat.mockResolvedValue({
       isDirectory: () => true,
-    } as ReturnType<typeof import("fs").statSync>);
+    } as unknown as import("fs").Stats);
 
     const response = await GET();
     const body = await response.json();
