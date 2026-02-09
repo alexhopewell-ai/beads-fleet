@@ -16,10 +16,10 @@ import { execFile as execFileCb } from "child_process";
 import { promisify } from "util";
 
 import { cache } from "./cache";
+import { computeInsightsFromIssues } from "./graph-metrics";
 import {
   readIssuesFromJSONL,
   issuesToPlan,
-  emptyInsights,
   emptyPriority,
 } from "./jsonl-fallback";
 import type {
@@ -102,12 +102,12 @@ export async function getInsights(projectPath?: string): Promise<RobotInsights> 
   } catch (error) {
     if (isBvNotFoundError(error)) {
       const issues = await readIssuesFromJSONL(resolvedPath);
-      const fallback = emptyInsights(resolvedPath, issues.length);
+      const fallback = computeInsightsFromIssues(issues, resolvedPath);
       cache.set(cacheKey, fallback);
       return fallback;
     }
     const issues = await readIssuesFromJSONL(resolvedPath);
-    const fallback = emptyInsights(resolvedPath, issues.length);
+    const fallback = computeInsightsFromIssues(issues, resolvedPath);
     cache.set(cacheKey, fallback);
     return fallback;
   }

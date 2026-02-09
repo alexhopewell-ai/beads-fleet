@@ -29,7 +29,7 @@ export type Priority = 0 | 1 | 2 | 3 | 4;
 export interface IssueDependency {
   issue_id: string;
   depends_on_id: string;
-  type: "blocks";
+  type: "blocks" | "parent-child" | string;
   created_at: string;
   created_by: string;
 }
