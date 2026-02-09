@@ -13,6 +13,7 @@
     "@reactflow/controls": "^11.2.14",
     "@reactflow/core": "^11.11.4",
     "@tanstack/react-query": "^5.90.20",
+    "better-sqlite3": "^12.6.2",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^18",

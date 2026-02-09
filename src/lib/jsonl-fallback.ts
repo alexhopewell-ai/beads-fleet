@@ -10,6 +10,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 
+import { readIssuesFromDB } from "./sqlite-reader";
 import type {
   BeadsIssue,
   IssueStatus,
@@ -22,12 +23,17 @@ import type {
 } from "./types";
 
 // -----------------------------------------------------------------------------
-// Read raw issues from .beads/issues.jsonl
+// Read raw issues — tries SQLite DB first, falls back to JSONL
 // -----------------------------------------------------------------------------
 
 export async function readIssuesFromJSONL(
   projectPath: string,
 ): Promise<BeadsIssue[]> {
+  // Try SQLite first (source of truth)
+  const dbIssues = readIssuesFromDB(projectPath);
+  if (dbIssues !== null) return dbIssues;
+
+  // Fall back to JSONL if no database
   const filePath = path.join(projectPath, ".beads", "issues.jsonl");
   let content: string;
   try {
@@ -152,11 +158,11 @@ export function issuesToPlan(
 // Empty stubs for insights and priority (no data without bv)
 // -----------------------------------------------------------------------------
 
-export function emptyInsights(projectPath: string): RobotInsights {
+export function emptyInsights(projectPath: string, totalIssues = 0): RobotInsights {
   return {
     timestamp: new Date().toISOString(),
     project_path: projectPath,
-    total_issues: 0,
+    total_issues: totalIssues,
     graph_density: 0,
     bottlenecks: [],
     keystones: [],

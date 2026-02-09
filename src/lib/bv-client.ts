@@ -101,11 +101,13 @@ export async function getInsights(projectPath?: string): Promise<RobotInsights> 
     return data;
   } catch (error) {
     if (isBvNotFoundError(error)) {
-      const fallback = emptyInsights(resolvedPath);
+      const issues = await readIssuesFromJSONL(resolvedPath);
+      const fallback = emptyInsights(resolvedPath, issues.length);
       cache.set(cacheKey, fallback);
       return fallback;
     }
-    const fallback = emptyInsights(resolvedPath);
+    const issues = await readIssuesFromJSONL(resolvedPath);
+    const fallback = emptyInsights(resolvedPath, issues.length);
     cache.set(cacheKey, fallback);
     return fallback;
   }
