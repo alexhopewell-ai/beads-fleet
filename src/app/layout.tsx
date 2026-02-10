@@ -11,6 +11,13 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Beads Web",
   description: "Web dashboard for the Beads issue tracker",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon",
+  },
+  manifest: "/manifest.webmanifest",
+  themeColor: "#0f1117",
 };
 
 export default function RootLayout({
