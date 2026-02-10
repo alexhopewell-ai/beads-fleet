@@ -14,6 +14,7 @@ export interface FilterCriteria {
   types?: IssueType[];
   owner?: string;
   labels?: string[];
+  projects?: string[];
   hasBlockers?: boolean;
   isStale?: boolean; // updated > 30 days ago
   isRecent?: boolean; // updated < 7 days ago
@@ -127,6 +128,14 @@ export function applyFilter(
     // Labels filter
     if (filter.labels && filter.labels.length > 0) {
       if (!issue.labels || !filter.labels.some((l) => issue.labels!.includes(l))) {
+        return false;
+      }
+    }
+
+    // Project filter (matches project:* labels)
+    if (filter.projects && filter.projects.length > 0) {
+      const projectLabels = filter.projects.map((p) => `project:${p}`);
+      if (!issue.labels || !projectLabels.some((pl) => issue.labels!.includes(pl))) {
         return false;
       }
     }

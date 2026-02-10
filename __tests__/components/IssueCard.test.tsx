@@ -215,7 +215,8 @@ describe("IssueCard", () => {
     it("renders em-dash when owner is absent", () => {
       const noOwnerIssue: PlanIssue = { ...baseIssue, owner: undefined };
       renderInTable(<IssueCard issue={noOwnerIssue} variant="row" />);
-      expect(screen.getByText("\u2014")).toBeInTheDocument();
+      const dashes = screen.getAllByText("\u2014");
+      expect(dashes.length).toBeGreaterThanOrEqual(1);
     });
 
     it("navigates via router.push on click", () => {

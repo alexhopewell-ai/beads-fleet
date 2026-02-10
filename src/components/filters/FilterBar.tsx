@@ -20,6 +20,7 @@ interface FilterBarProps {
   onFilterChange: (filter: FilterCriteria) => void;
   activeViewId?: string;
   onViewChange?: (viewId: string) => void;
+  availableProjects?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -58,6 +59,7 @@ function isDefaultFilter(filter: FilterCriteria): boolean {
     (!filter.types || filter.types.length === 0) &&
     !filter.owner &&
     (!filter.labels || filter.labels.length === 0) &&
+    (!filter.projects || filter.projects.length === 0) &&
     filter.hasBlockers === undefined &&
     !filter.search
   );
@@ -171,6 +173,7 @@ export function FilterBar({
   onFilterChange,
   activeViewId,
   onViewChange,
+  availableProjects = [],
 }: FilterBarProps) {
   const [views, setViews] = useState<SavedView[]>(() => getAllViews());
   const [showSavePrompt, setShowSavePrompt] = useState(false);
@@ -220,6 +223,14 @@ export function FilterBar({
     onFilterChange({
       ...filter,
       types: types.length > 0 ? types : undefined,
+    });
+    onViewChange?.("");
+  };
+
+  const handleProjectChange = (projects: string[]) => {
+    onFilterChange({
+      ...filter,
+      projects: projects.length > 0 ? projects : undefined,
     });
     onViewChange?.("");
   };
@@ -315,6 +326,17 @@ export function FilterBar({
           renderOption={(t) => TYPE_LABELS[t]}
           onChange={handleTypeChange}
         />
+
+        {/* Project multi-select */}
+        {availableProjects.length > 1 && (
+          <MultiSelectDropdown
+            label="Project"
+            options={availableProjects}
+            selected={filter.projects ?? []}
+            renderOption={(p) => p}
+            onChange={handleProjectChange}
+          />
+        )}
 
         {/* Spacer pushes actions to right */}
         <div className="flex-1" />

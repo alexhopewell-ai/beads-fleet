@@ -7,15 +7,21 @@ import { applyFilter, BUILT_IN_VIEWS } from "@/lib/recipes";
 import { IssueCard } from "@/components/ui/IssueCard";
 import { FilterBar } from "@/components/filters/FilterBar";
 
-type SortKey = "id" | "title" | "status" | "priority" | "owner" | "blocked_by";
+type SortKey = "id" | "project" | "title" | "status" | "priority" | "owner" | "blocked_by";
 type SortDir = "asc" | "desc";
 
 interface IssueTableProps {
   issues: PlanIssue[];
 }
 
+function getProject(issue: PlanIssue): string {
+  const label = issue.labels?.find((l) => l.startsWith("project:"));
+  return label ? label.slice(8) : "";
+}
+
 const COLUMN_HEADERS: { key: SortKey; label: string }[] = [
   { key: "id", label: "ID" },
+  { key: "project", label: "Project" },
   { key: "title", label: "Title" },
   { key: "status", label: "Status" },
   { key: "priority", label: "Priority" },
@@ -27,6 +33,8 @@ function comparePlanIssues(a: PlanIssue, b: PlanIssue, key: SortKey): number {
   switch (key) {
     case "id":
       return a.id.localeCompare(b.id);
+    case "project":
+      return getProject(a).localeCompare(getProject(b));
     case "title":
       return a.title.localeCompare(b.title);
     case "status":
@@ -62,6 +70,15 @@ export function IssueTable({ issues }: IssueTableProps) {
     }
   };
 
+  const availableProjects = useMemo(() => {
+    const projects = new Set<string>();
+    for (const issue of issues) {
+      const label = issue.labels?.find((l) => l.startsWith("project:"));
+      if (label) projects.add(label.slice(8));
+    }
+    return Array.from(projects).sort();
+  }, [issues]);
+
   const sortedIssues = useMemo(() => {
     const filtered = applyFilter(issues, filter);
 
@@ -94,6 +111,7 @@ export function IssueTable({ issues }: IssueTableProps) {
         onFilterChange={setFilter}
         activeViewId={activeViewId}
         onViewChange={setActiveViewId}
+        availableProjects={availableProjects}
       />
 
       {/* Desktop table */}

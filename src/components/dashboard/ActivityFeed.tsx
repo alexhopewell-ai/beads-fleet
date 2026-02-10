@@ -46,7 +46,7 @@ export function ActivityFeed() {
     );
   }
 
-  if (error || !diff || diff.changes.length === 0) {
+  if (error || !diff || !diff.changes?.length) {
     return (
       <section className="card p-4">
         <h2 className="text-sm font-semibold text-white mb-3">

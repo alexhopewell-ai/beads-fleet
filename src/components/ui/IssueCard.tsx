@@ -7,6 +7,11 @@ import { StatusBadge } from "./StatusBadge";
 import { PriorityIndicator } from "./PriorityIndicator";
 import { IssueTypeIcon } from "./IssueTypeIcon";
 
+function getProject(issue: PlanIssue): string {
+  const label = issue.labels?.find((l) => l.startsWith("project:"));
+  return label ? label.slice(8) : "";
+}
+
 interface IssueCardProps {
   issue: PlanIssue;
   variant?: "card" | "row";
@@ -45,6 +50,15 @@ export function IssueCard({
           {issue.id}
         </td>
         <td className="px-3 py-2">
+          {getProject(issue) ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-2 text-gray-300">
+              {getProject(issue)}
+            </span>
+          ) : (
+            <span className="text-gray-500">{"\u2014"}</span>
+          )}
+        </td>
+        <td className="px-3 py-2">
           <span className="inline-flex items-center gap-2">
             <IssueTypeIcon type={issue.issue_type} />
             <span className="text-sm">{issue.title}</span>
@@ -80,7 +94,14 @@ export function IssueCard({
           <IssueTypeIcon type={issue.issue_type} />
           <span className="font-mono text-xs text-gray-400">{issue.id}</span>
         </div>
-        <PriorityIndicator priority={issue.priority} />
+        <div className="flex items-center gap-2">
+          {getProject(issue) && (
+            <span className="text-[10px] text-gray-500 bg-surface-2 px-1.5 py-0.5 rounded">
+              {getProject(issue)}
+            </span>
+          )}
+          <PriorityIndicator priority={issue.priority} />
+        </div>
       </div>
       <h3 className="text-sm font-medium mb-2 line-clamp-2">{issue.title}</h3>
       {issue.impact_score != null && issue.impact_score > 0 && (

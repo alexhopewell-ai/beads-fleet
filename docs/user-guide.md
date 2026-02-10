@@ -31,7 +31,7 @@ These three tools form a pipeline:
 2. **bv** analyzes issues -- reading the dependency graph and computing metrics that reveal bottlenecks, critical paths, and circular dependencies.
 3. **Beads Web** displays issues visually -- presenting the data from bd and the analytics from bv in an interactive browser dashboard.
 
-You do not need `bv` installed to use Beads Web. Without it, you get all issue data (from the SQLite database or JSONL file) but no graph-based metrics. With it, you get the full analytics experience.
+Both tools are installed automatically by `npm install`. `bd` is bundled as the `@beads/bd` npm dependency. `bv` is downloaded from [GitHub releases](https://github.com/Dicklesworthstone/beads_viewer) by the `scripts/install-bv.sh` postinstall script. If the `bv` download fails (no internet, unsupported platform), the app falls back to SQLite-based analytics -- you get all issue data but no graph-based metrics. With `bv` present, you get the full analytics experience out of the box.
 
 ---
 
@@ -41,8 +41,9 @@ You do not need `bv` installed to use Beads Web. Without it, you get all issue d
 
 - **Node.js 18+** -- required to run the Next.js application
 - **Git** -- your Beads data lives in a git repository
-- **bd CLI** installed -- the Beads issue tracker must be initialized in at least one project (the project should contain a `.beads/` directory)
-- **bv CLI** (optional) -- install beads_viewer to enable graph metrics on the Insights page
+- **At least one Beads-initialized project** -- a repository where `bd init` has been run (the project should contain a `.beads/` directory)
+
+The `bd` CLI and `bv` (beads_viewer) are both installed automatically when you run `npm install`. `bd` comes from the `@beads/bd` npm dependency; `bv` is downloaded from GitHub releases by a postinstall script (`scripts/install-bv.sh`). You do not need to install either tool separately or globally. If the `bv` download fails, the app falls back to SQLite-based analytics.
 
 ### Installation
 
@@ -60,7 +61,7 @@ Create a `.env.local` file in the project root:
 # Required: path to a Beads-enabled git repository
 BEADS_PROJECT_PATH=/path/to/your/project
 
-# Optional: explicit path to bv binary (if not on PATH)
+# Optional: override path to bv binary (the bundled version is used by default)
 BV_PATH=
 
 # Optional: polling interval in ms (default 30000)
@@ -82,7 +83,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 If no repositories are configured, Beads Web displays a setup wizard on first launch. The wizard walks you through three steps:
 
 1. **Welcome** -- introduces the application.
-2. **Prerequisites Check** -- verifies that Node.js is running and whether `bv` is available. If bv is not installed, you will see a note that the app will operate in basic mode (no graph metrics).
+2. **Prerequisites Check** -- verifies that Node.js is running and that the bundled `bv` is available.
 3. **Add a Repository** -- prompts you to enter the absolute path to your Beads-enabled project. The app validates that a `.beads/` directory exists at that path before accepting it.
 
 After completing the wizard, the dashboard loads with your issue data.
@@ -210,7 +211,7 @@ At the bottom of the page, an interactive dependency graph renders all issues an
 
 ### Without bv
 
-If the `bv` CLI is not installed, the Insights page still loads but all metric panels will be empty. A notice explains that `bv` is needed for graph-based insights. The total issue count is still displayed.
+Since `bv` is bundled with Beads Web, this scenario is uncommon. However, if `bv` is not reachable (for example, in a restricted deployment environment), the Insights page still loads but all metric panels will be empty. A notice explains that `bv` is needed for graph-based insights. The total issue count is still displayed.
 
 ---
 
@@ -444,7 +445,7 @@ Beads Web uses a layered data strategy, automatically selecting the best availab
 
 ### Primary: bv Robot Protocol
 
-When the `bv` CLI is installed and reachable, Beads Web calls `bv --robot-*` commands to get structured JSON with full graph metrics:
+The `bv` CLI is available by default after `npm install` (downloaded from GitHub releases by the postinstall script). Beads Web calls `bv --robot-*` commands to get structured JSON with full graph metrics:
 
 | Command | Data Returned |
 |---------|---------------|
@@ -473,7 +474,7 @@ If the SQLite database is also unavailable, the app falls back to reading `.bead
 
 You do not need to configure which data source to use. The app tries them in order:
 
-1. `bv` Robot Protocol (if `bv` is on PATH or at `BV_PATH`)
+1. `bv` Robot Protocol (downloaded by postinstall script, or at the path specified by `BV_PATH`)
 2. SQLite database (if `.beads/beads.db` exists)
 3. JSONL file (if `.beads/issues.jsonl` exists)
 
@@ -526,7 +527,7 @@ The compose configuration runs on port 3000 and restarts automatically unless ex
 ### Notes on Docker Deployment
 
 - The project directory is mounted read-only (`:ro`), so the container cannot modify your repository.
-- The `bv` CLI is not included in the Docker image by default. The container operates in SQLite/JSONL fallback mode unless you install `bv` in a custom image layer.
+- The `bv` CLI is downloaded during `npm install` (via the postinstall script) and included in the image. Graph metrics should work out of the box inside the container.
 - The container runs as a non-root user (`nextjs`) for security.
 
 ---
@@ -546,9 +547,8 @@ The compose configuration runs on port 3000 and restarts automatically unless ex
 
 ### "No graph metrics on Insights page"
 
-- The `bv` (beads_viewer) CLI is not installed or not found on your PATH.
-- Install beads_viewer to enable full graph analytics.
-- Alternatively, set the `BV_PATH` environment variable to the absolute path of the `bv` binary.
+- The `bv` binary may not have downloaded correctly during the postinstall step. Try deleting `node_modules` and running `npm install` again, or run `scripts/install-bv.sh` manually.
+- If you need to use a different `bv` binary, set the `BV_PATH` environment variable to its absolute path.
 - You can confirm `bv` availability by checking the sidebar status indicator (green dot = connected, amber dot = fallback mode).
 
 ### "404 on API routes"
@@ -580,5 +580,5 @@ Visit [http://localhost:3000/api/health](http://localhost:3000/api/health) in yo
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `BEADS_PROJECT_PATH` | Yes (for first setup) | none | Path to your Beads-enabled project |
-| `BV_PATH` | No | `bv` (from PATH) | Explicit path to the bv binary |
+| `BV_PATH` | No | `bv` downloaded by postinstall script | Override path to the bv binary. If omitted, the version downloaded by `scripts/install-bv.sh` is used. |
 | `POLL_INTERVAL_MS` | No | `30000` | Auto-refresh interval in milliseconds |

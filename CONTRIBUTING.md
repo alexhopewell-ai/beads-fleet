@@ -29,6 +29,8 @@ Open a [GitHub Issue](https://github.com/jmcy9999/beads-web/issues) with the **e
 - Node.js 18+ and npm
 - At least one Beads-initialized repository (run `bd init` inside a repo)
 
+The Beads CLI (`bd`) and beads_viewer (`bv`) are both installed automatically by `npm install`. `bd` is bundled as the `@beads/bd` npm dependency. `bv` is downloaded from [GitHub releases](https://github.com/Dicklesworthstone/beads_viewer) by the `scripts/install-bv.sh` postinstall script. You do not need to install either tool separately or globally. If the `bv` download fails (no internet, unsupported platform), the app falls back to SQLite-based analytics. The `BV_PATH` environment variable can override the `bv` binary path.
+
 ### Steps
 
 1. **Fork and clone** the repository:
@@ -81,6 +83,8 @@ src/
     cache.ts            Server-side caching
     repo-config.ts      Repository configuration
     recipes.ts          Predefined query recipes
+scripts/
+    install-bv.sh       Postinstall script that downloads bv from GitHub releases
 docs/                   Design documents
 ```
 

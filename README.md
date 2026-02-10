@@ -59,8 +59,7 @@ Open [http://localhost:3000](http://localhost:3000).
 |-------------|-------|
 | **Node.js 18+** | Runtime for Next.js |
 | **Git** | Required for Time Travel diffs and Beads itself |
-| **Beads CLI (`bd`)** | Must be installed and initialized (`bd init`) in at least one project. [Install Beads](https://github.com/steveyegge/beads) |
-| **beads_viewer (`bv`)** | *Optional but recommended.* Enables full graph metrics (PageRank, HITS, cycle detection). Without it, the app falls back to direct SQLite reads. |
+| **Beads CLI (`bd`) and beads_viewer (`bv`)** | Both installed automatically by `npm install` -- no separate or global install needed. `bd` is bundled as the `@beads/bd` npm dependency. `bv` is downloaded from GitHub releases by the `scripts/install-bv.sh` postinstall script. If the `bv` download fails (no internet, unsupported platform), the app falls back to SQLite-based analytics. At least one project must be initialized with `bd init`. The `BV_PATH` env var can override the `bv` binary path. |
 
 ---
 
@@ -103,7 +102,7 @@ node .next/standalone/server.js
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `BEADS_PROJECT_PATH` | Yes | Absolute path to a Beads-enabled repo (must contain a `.beads/` directory) |
-| `BV_PATH` | No | Path to the `bv` binary. If omitted, the app searches `$PATH`. |
+| `BV_PATH` | No | Override path to the `bv` binary. If omitted, the version downloaded by the postinstall script is used. |
 
 Set these in `.env.local` for development or pass them as environment variables in production.
 
@@ -268,5 +267,5 @@ MIT License. See [LICENSE](LICENSE) for details.
 ## Acknowledgments
 
 - [Beads](https://github.com/steveyegge/beads) by Steve Yegge -- the issue tracker this dashboard visualizes
-- [beads_viewer (`bv`)](https://github.com/steveyegge/beads) -- the terminal TUI whose Robot Protocol powers the backend
+- [beads_viewer (`bv`)](https://github.com/Dicklesworthstone/beads_viewer) by Dicklesworthstone (MIT) -- the terminal TUI / graph analytics engine whose Robot Protocol powers the backend
 - Built with [Next.js](https://nextjs.org/), [ReactFlow](https://reactflow.dev/), [TanStack Query](https://tanstack.com/query), [Tailwind CSS](https://tailwindcss.com/), and [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
