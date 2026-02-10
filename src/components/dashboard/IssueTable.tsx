@@ -6,8 +6,9 @@ import type { FilterCriteria } from "@/lib/recipes";
 import { applyFilter, BUILT_IN_VIEWS } from "@/lib/recipes";
 import { IssueCard } from "@/components/ui/IssueCard";
 import { FilterBar } from "@/components/filters/FilterBar";
+import { useTokenUsageSummary } from "@/hooks/useTokenUsage";
 
-type SortKey = "id" | "project" | "title" | "status" | "priority" | "owner" | "blocked_by";
+type SortKey = "id" | "project" | "title" | "status" | "priority" | "owner" | "blocked_by" | "cost";
 type SortDir = "asc" | "desc";
 
 interface IssueTableProps {
@@ -27,9 +28,15 @@ const COLUMN_HEADERS: { key: SortKey; label: string }[] = [
   { key: "priority", label: "Priority" },
   { key: "owner", label: "Owner" },
   { key: "blocked_by", label: "Blocked By" },
+  { key: "cost", label: "Cost" },
 ];
 
-function comparePlanIssues(a: PlanIssue, b: PlanIssue, key: SortKey): number {
+function comparePlanIssues(
+  a: PlanIssue,
+  b: PlanIssue,
+  key: SortKey,
+  tokenSummary?: Record<string, { total_cost_usd: number }>,
+): number {
   switch (key) {
     case "id":
       return a.id.localeCompare(b.id);
@@ -45,6 +52,11 @@ function comparePlanIssues(a: PlanIssue, b: PlanIssue, key: SortKey): number {
       return (a.owner ?? "").localeCompare(b.owner ?? "");
     case "blocked_by":
       return a.blocked_by.length - b.blocked_by.length;
+    case "cost": {
+      const aCost = tokenSummary?.[a.id]?.total_cost_usd ?? 0;
+      const bCost = tokenSummary?.[b.id]?.total_cost_usd ?? 0;
+      return aCost - bCost;
+    }
     default:
       return 0;
   }
@@ -54,6 +66,7 @@ function comparePlanIssues(a: PlanIssue, b: PlanIssue, key: SortKey): number {
 const DEFAULT_VIEW = BUILT_IN_VIEWS[0];
 
 export function IssueTable({ issues }: IssueTableProps) {
+  const { data: tokenSummary } = useTokenUsageSummary();
   const [sortKey, setSortKey] = useState<SortKey>("priority");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [filter, setFilter] = useState<FilterCriteria>(
@@ -83,10 +96,10 @@ export function IssueTable({ issues }: IssueTableProps) {
     const filtered = applyFilter(issues, filter);
 
     return [...filtered].sort((a, b) => {
-      const cmp = comparePlanIssues(a, b, sortKey);
+      const cmp = comparePlanIssues(a, b, sortKey, tokenSummary?.byIssue);
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [issues, filter, sortKey, sortDir]);
+  }, [issues, filter, sortKey, sortDir, tokenSummary]);
 
   const sortIndicator = (key: SortKey) => {
     if (key !== sortKey) return null;
@@ -133,7 +146,12 @@ export function IssueTable({ issues }: IssueTableProps) {
           </thead>
           <tbody className="divide-y divide-surface-2">
             {sortedIssues.map((issue) => (
-              <IssueCard key={issue.id} issue={issue} variant="row" />
+              <IssueCard
+                key={issue.id}
+                issue={issue}
+                variant="row"
+                tokenCost={tokenSummary?.byIssue?.[issue.id]?.total_cost_usd}
+              />
             ))}
           </tbody>
         </table>
@@ -147,7 +165,12 @@ export function IssueTable({ issues }: IssueTableProps) {
       {/* Mobile cards */}
       <div className="md:hidden grid gap-3">
         {sortedIssues.map((issue) => (
-          <IssueCard key={issue.id} issue={issue} variant="card" />
+          <IssueCard
+            key={issue.id}
+            issue={issue}
+            variant="card"
+            tokenCost={tokenSummary?.byIssue?.[issue.id]?.total_cost_usd}
+          />
         ))}
         {sortedIssues.length === 0 && (
           <p className="text-center text-gray-500 py-8 text-sm">

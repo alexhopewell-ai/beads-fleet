@@ -16,12 +16,14 @@ interface IssueCardProps {
   issue: PlanIssue;
   variant?: "card" | "row";
   onClick?: (issueId: string) => void;
+  tokenCost?: number;
 }
 
 export function IssueCard({
   issue,
   variant = "card",
   onClick,
+  tokenCost,
 }: IssueCardProps) {
   const router = useRouter();
 
@@ -82,6 +84,13 @@ export function IssueCard({
             <span className="text-gray-500">0</span>
           )}
         </td>
+        <td className="px-3 py-2 text-sm text-right font-mono">
+          {tokenCost != null && tokenCost > 0 ? (
+            <span className="text-amber-400">${tokenCost.toFixed(2)}</span>
+          ) : (
+            <span className="text-gray-500">{"\u2014"}</span>
+          )}
+        </td>
       </tr>
     );
   }
@@ -124,6 +133,9 @@ export function IssueCard({
             </span>
           )}
           {issue.owner && <span>{issue.owner}</span>}
+          {tokenCost != null && tokenCost > 0 && (
+            <span className="text-amber-400 font-mono">${tokenCost.toFixed(2)}</span>
+          )}
         </div>
       </div>
     </>

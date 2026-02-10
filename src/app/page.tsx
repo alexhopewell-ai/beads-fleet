@@ -5,6 +5,7 @@ import { WhatsNext } from "@/components/dashboard/WhatsNext";
 import { IssueTable } from "@/components/dashboard/IssueTable";
 import { PriorityAlerts } from "@/components/dashboard/PriorityAlerts";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { TokenUsageSummary } from "@/components/dashboard/TokenUsageSummary";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { SummaryCardSkeleton } from "@/components/ui/LoadingSkeleton";
 import { useIssues } from "@/hooks/useIssues";
@@ -64,6 +65,8 @@ export default function Home() {
       <h1 className="text-2xl font-bold text-white">Dashboard</h1>
 
       <SummaryCards summary={plan.summary} />
+
+      <TokenUsageSummary />
 
       {plan.summary.highest_impact && (
         <WhatsNext impact={plan.summary.highest_impact} />

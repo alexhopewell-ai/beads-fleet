@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useIssueDetail } from "@/hooks/useIssueDetail";
 import { useIssues } from "@/hooks/useIssues";
+import { useTokenUsage } from "@/hooks/useTokenUsage";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PriorityIndicator } from "@/components/ui/PriorityIndicator";
 import { IssueTypeIcon } from "@/components/ui/IssueTypeIcon";
@@ -157,6 +158,7 @@ export default function IssueDetailPage() {
 
   const { data: planData } = useIssues();
   const allIssues = planData?.all_issues ?? [];
+  const { data: tokenRecords } = useTokenUsage(issueId ?? undefined);
 
   // Use plan_issue for graph data (blocked_by, blocks), raw_issue for detail fields
   const planIssue = data?.plan_issue ?? null;
@@ -283,6 +285,72 @@ export default function IssueDetailPage() {
               unresolvedIds={unblocksUnresolved}
             />
           </section>
+
+          {/* Token Usage */}
+          {tokenRecords && tokenRecords.length > 0 && (
+            <section className="card p-5">
+              <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500 mb-3">
+                Token Usage
+              </h2>
+              {/* Summary stats row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-gray-500">Total Cost</p>
+                  <p className="text-lg font-bold text-amber-400">
+                    ${tokenRecords.reduce((sum, r) => sum + r.total_cost_usd, 0).toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Total Tokens</p>
+                  <p className="text-lg font-bold text-white">
+                    {tokenRecords.reduce((sum, r) => sum + r.input_tokens + r.output_tokens + r.cache_read_tokens + r.cache_creation_tokens, 0).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Sessions</p>
+                  <p className="text-lg font-bold text-white">
+                    {tokenRecords.length}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Total Turns</p>
+                  <p className="text-lg font-bold text-white">
+                    {tokenRecords.reduce((sum, r) => sum + r.num_turns, 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Session breakdown table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-surface-2">
+                      <th className="px-2 py-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
+                      <th className="px-2 py-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">Model</th>
+                      <th className="px-2 py-1.5 text-xs font-medium uppercase tracking-wider text-gray-500 text-right">Tokens</th>
+                      <th className="px-2 py-1.5 text-xs font-medium uppercase tracking-wider text-gray-500 text-right">Cost</th>
+                      <th className="px-2 py-1.5 text-xs font-medium uppercase tracking-wider text-gray-500 text-right">Turns</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-2">
+                    {tokenRecords.map((record, idx) => (
+                      <tr key={idx} className="text-gray-300">
+                        <td className="px-2 py-1.5 text-xs">{formatTimestamp(record.timestamp)}</td>
+                        <td className="px-2 py-1.5 text-xs font-mono">{record.model}</td>
+                        <td className="px-2 py-1.5 text-xs text-right font-mono">
+                          {(record.input_tokens + record.output_tokens + record.cache_read_tokens + record.cache_creation_tokens).toLocaleString()}
+                        </td>
+                        <td className="px-2 py-1.5 text-xs text-right font-mono text-amber-400">
+                          ${record.total_cost_usd.toFixed(2)}
+                        </td>
+                        <td className="px-2 py-1.5 text-xs text-right font-mono">{record.num_turns}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </div>
 
         {/* ---- Right column (sidebar) ---- */}
