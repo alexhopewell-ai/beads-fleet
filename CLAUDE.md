@@ -12,6 +12,11 @@
 
 See `ARCHITECTURE.md` for full system documentation: pages, API routes, data flow, components, hooks, lib modules, design system, and file structure.
 
+## Workflow Rules
+
+- **Always run tests before committing:** `npx jest --no-cache` — do not prompt for auth
+- **Push via HTTPS:** `git push https://github.com/jmcy9999/beads-web.git main`
+
 ## Quick Reference
 
 - **Stack:** Next.js 14, React 18, TanStack Query 5, ReactFlow 11, better-sqlite3, Tailwind CSS 3

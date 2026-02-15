@@ -11,6 +11,8 @@ import type { PlanIssue, BeadsIssue } from "@/lib/types";
 
 jest.mock("@/lib/repo-config", () => ({
   getActiveProjectPath: jest.fn(),
+  findRepoForIssue: jest.fn(),
+  ALL_PROJECTS_SENTINEL: "__all__",
 }));
 
 jest.mock("@/lib/bv-client", () => ({
@@ -18,11 +20,14 @@ jest.mock("@/lib/bv-client", () => ({
 }));
 
 import { GET } from "@/app/api/issues/[id]/route";
-import { getActiveProjectPath } from "@/lib/repo-config";
+import { getActiveProjectPath, findRepoForIssue } from "@/lib/repo-config";
 import { getIssueById } from "@/lib/bv-client";
 
 const mockGetActiveProjectPath = getActiveProjectPath as jest.MockedFunction<
   typeof getActiveProjectPath
+>;
+const mockFindRepoForIssue = findRepoForIssue as jest.MockedFunction<
+  typeof findRepoForIssue
 >;
 const mockGetIssueById = getIssueById as jest.MockedFunction<
   typeof getIssueById
@@ -158,5 +163,39 @@ describe("GET /api/issues/:id", () => {
     expect(response.status).toBe(200);
     expect(body.plan_issue).toEqual(MOCK_PLAN_ISSUE);
     expect(body.raw_issue).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // __all__ aggregation mode
+  // -------------------------------------------------------------------------
+
+  it("resolves repo via findRepoForIssue in __all__ mode", async () => {
+    mockGetActiveProjectPath.mockResolvedValue("__all__");
+    mockFindRepoForIssue.mockResolvedValue("/tmp/resolved-project");
+    mockGetIssueById.mockResolvedValue(MOCK_ISSUE_RESPONSE);
+
+    const response = await GET(makeRequest("TEST-001"), makeParams("TEST-001"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual(MOCK_ISSUE_RESPONSE);
+    expect(mockFindRepoForIssue).toHaveBeenCalledWith("TEST-001");
+    expect(mockGetIssueById).toHaveBeenCalledWith("TEST-001", "/tmp/resolved-project");
+  });
+
+  it("returns 404 when issue not found in any repo in __all__ mode", async () => {
+    mockGetActiveProjectPath.mockResolvedValue("__all__");
+    mockFindRepoForIssue.mockResolvedValue(null);
+
+    const response = await GET(
+      makeRequest("GHOST-999"),
+      makeParams("GHOST-999"),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(body.error).toContain("GHOST-999");
+    expect(body.error).toContain("not found in any configured repo");
+    expect(mockGetIssueById).not.toHaveBeenCalled();
   });
 });
