@@ -242,6 +242,14 @@ Or add it directly to `~/.beads-web.json`:
 - **Navigation:** Sidebar link + keyboard shortcut `f`
 - **Components:** `FleetBoard` -> `FleetColumn` -> `FleetCard`, with `fleet-utils.ts` for stage detection and fleet data extraction
 
+### Research Completion Signals (Polling API)
+- **`GET /api/signals`** — Polling endpoint for detecting issue state changes
+- **Required param:** `since` (ISO timestamp) — returns issues changed after this time
+- **Optional params:** `label` (filter by label, repeatable, AND logic), `status` (default "closed"), `field` (check "closed_at" or "updated_at")
+- **Response:** `{ signals: [{ id, title, status, labels, closed_at, close_reason, epic, updated_at }], count, since }`
+- **Factory use case:** Agent polls `GET /api/signals?since=<last-check>&label=research` to detect when research tasks close, then prompts Jane for review
+- **Multi-repo:** Supports `__all__` aggregation mode — merges signals across all projects
+
 ### System Health & Setup
 - Health check: bv CLI availability, project path validity
 - Setup wizard for first-time users (prerequisites check, add first repo)
@@ -309,6 +317,7 @@ bv CLI (--robot-plan/insights/priority/diff)                            │
 | `/api/repos` | GET | `RepoStore` (repos[], activeRepo) | Repo config |
 | `/api/repos` | POST | `RepoStore` | Body: `{ action: "add"\|"remove"\|"set-active", path, name? }` |
 | `/api/token-usage` | GET | `TokenUsageRecord[]` or summary | Params: `summary=true`, `issue_id=X`. Supports `__all__` |
+| `/api/signals` | GET | `{ signals[], count, since }` | Params: `since` (required), `label`, `status`, `field`. Polling for state changes. Supports `__all__` |
 
 ## Core Library Modules
 
@@ -478,6 +487,7 @@ src/
       health/route.ts       # GET system health
       repos/route.ts        # GET/POST repo config
       token-usage/route.ts  # GET token usage (supports __all__)
+      signals/route.ts      # GET polling endpoint for state changes
   lib/
     bv-client.ts            # Central data layer (bv CLI wrapper)
     types.ts                # All TypeScript types
