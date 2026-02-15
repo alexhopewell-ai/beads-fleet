@@ -1,4 +1,4 @@
-import type { PlanIssue } from "@/lib/types";
+import type { PlanIssue, IssueTokenSummary } from "@/lib/types";
 
 /** Pipeline stages for the factory fleet view. */
 export type FleetStage =
@@ -90,6 +90,99 @@ export function detectStage(
  * Extract fleet apps from the full issue list.
  * An "app" is any epic-type issue.
  */
+// ---------------------------------------------------------------------------
+// Cost per app — aggregate token usage by epic with phase breakdown
+// ---------------------------------------------------------------------------
+
+export interface PhaseCost {
+  phase: string;
+  cost: number;
+  sessions: number;
+}
+
+export interface EpicCost {
+  epicId: string;
+  totalCost: number;
+  totalSessions: number;
+  phases: PhaseCost[];
+}
+
+/**
+ * Determine the phase of an issue based on its labels.
+ * Returns "research", "development", "submission", or "other".
+ */
+function classifyPhase(issue: PlanIssue): string {
+  if (issue.labels?.some((l) => l.startsWith("submission:"))) return "submission";
+  if (issue.labels?.includes("development")) return "development";
+  if (issue.labels?.includes("research")) return "research";
+  return "other";
+}
+
+/**
+ * Compute per-epic cost breakdowns from token usage summaries.
+ *
+ * For each epic, sums up token costs from:
+ * - The epic issue itself (work attributed directly to the epic)
+ * - All child issues, grouped by phase (research/development/submission/other)
+ */
+export function computeEpicCosts(
+  apps: FleetApp[],
+  byIssue: Record<string, IssueTokenSummary>,
+): Map<string, EpicCost> {
+  const result = new Map<string, EpicCost>();
+
+  for (const app of apps) {
+    const phaseMap = new Map<string, PhaseCost>();
+    let totalCost = 0;
+    let totalSessions = 0;
+
+    // Cost attributed directly to the epic
+    const epicUsage = byIssue[app.epic.id];
+    if (epicUsage) {
+      totalCost += epicUsage.total_cost_usd;
+      totalSessions += epicUsage.session_count;
+      const phase = "other";
+      const existing = phaseMap.get(phase);
+      if (existing) {
+        existing.cost += epicUsage.total_cost_usd;
+        existing.sessions += epicUsage.session_count;
+      } else {
+        phaseMap.set(phase, { phase, cost: epicUsage.total_cost_usd, sessions: epicUsage.session_count });
+      }
+    }
+
+    // Cost from children, grouped by phase
+    for (const child of app.children) {
+      const childUsage = byIssue[child.id];
+      if (!childUsage) continue;
+
+      totalCost += childUsage.total_cost_usd;
+      totalSessions += childUsage.session_count;
+
+      const phase = classifyPhase(child);
+      const existing = phaseMap.get(phase);
+      if (existing) {
+        existing.cost += childUsage.total_cost_usd;
+        existing.sessions += childUsage.session_count;
+      } else {
+        phaseMap.set(phase, { phase, cost: childUsage.total_cost_usd, sessions: childUsage.session_count });
+      }
+    }
+
+    if (totalCost > 0 || totalSessions > 0) {
+      // Sort phases in pipeline order
+      const phaseOrder = ["research", "development", "submission", "other"];
+      const phases = phaseOrder
+        .filter((p) => phaseMap.has(p))
+        .map((p) => phaseMap.get(p)!);
+
+      result.set(app.epic.id, { epicId: app.epic.id, totalCost, totalSessions, phases });
+    }
+  }
+
+  return result;
+}
+
 export function buildFleetApps(allIssues: PlanIssue[]): FleetApp[] {
   const epics = allIssues.filter((i) => i.issue_type === "epic");
 

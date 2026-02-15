@@ -197,6 +197,14 @@ Or add it directly to `~/.beads-web.json`:
 - Per-issue detail: sessions table with model, tokens, cost, duration, turns
 - Reads from `.beads/token-usage.jsonl`
 
+### Cost Per App (Epic Cost Aggregation)
+- **Fleet cards:** Each app card shows total cost with phase breakdown (research/development/submission/other)
+- **Fleet page header:** Shows fleet-wide total cost across all apps
+- **Issue detail page:** Epic-type issues show an "App Cost" section with total cost, session count, and per-phase cost bars with percentages
+- **Phase classification:** Children's labels determine phase — `research` label = research, `development` label = development, `submission:*` labels = submission, anything else = other
+- **Data flow:** Client-side aggregation — `useTokenUsageSummary()` provides per-issue costs, `computeEpicCosts()` in `fleet-utils.ts` maps children costs up to their parent epic
+- **Phase ordering:** research → development → submission → other (pipeline order)
+
 ### Priority Intelligence
 - Detects misaligned priorities (current vs recommended based on graph position)
 - Shows confidence score and reason for each recommendation
@@ -209,6 +217,7 @@ Or add it directly to `~/.beads-web.json`:
 - Dependency tree: blocked by / unblocks (with titles resolved)
 - **Epic children with progress:** For epic issues, lists all child issues with a progress bar showing completion percentage (closed/total)
 - **Parent epic link:** For child issues, sidebar shows clickable link to parent epic
+- **App Cost section:** For epic-type issues, shows aggregated cost across the epic and all children, with per-phase breakdown bars (research/development/submission/other)
 - Token usage sessions table
 - Timestamps (created, updated, closed) and close reason
 

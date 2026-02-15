@@ -3,13 +3,21 @@
 import Link from "next/link";
 import { PriorityIndicator } from "@/components/ui/PriorityIndicator";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import type { FleetApp } from "./fleet-utils";
+import type { FleetApp, EpicCost } from "./fleet-utils";
 
 interface FleetCardProps {
   app: FleetApp;
+  cost?: EpicCost;
 }
 
-export function FleetCard({ app }: FleetCardProps) {
+const PHASE_COLORS: Record<string, string> = {
+  research: "text-blue-400",
+  development: "text-amber-400",
+  submission: "text-purple-400",
+  other: "text-gray-400",
+};
+
+export function FleetCard({ app, cost }: FleetCardProps) {
   const { epic, children, progress } = app;
   const pct =
     progress.total > 0
@@ -77,6 +85,32 @@ export function FleetCard({ app }: FleetCardProps) {
               {state}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Cost breakdown */}
+      {cost && cost.totalCost > 0 && (
+        <div className="mb-2 py-1.5 border-t border-border-default">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] uppercase text-gray-500 font-medium">Cost</span>
+            <span className="text-xs font-mono text-amber-400">
+              ${cost.totalCost.toFixed(2)}
+            </span>
+          </div>
+          {cost.phases.length > 1 && (
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+              {cost.phases.map((p) => (
+                <span key={p.phase} className="text-[10px]">
+                  <span className={PHASE_COLORS[p.phase] ?? "text-gray-400"}>
+                    {p.phase}
+                  </span>
+                  <span className="text-gray-500 font-mono ml-0.5">
+                    ${p.cost.toFixed(2)}
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

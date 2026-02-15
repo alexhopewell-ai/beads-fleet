@@ -3,14 +3,16 @@ import {
   FLEET_STAGES,
   buildFleetApps,
   type FleetStage,
+  type EpicCost,
 } from "./fleet-utils";
 import type { PlanIssue } from "@/lib/types";
 
 interface FleetBoardProps {
   issues: PlanIssue[];
+  epicCosts?: Map<string, EpicCost>;
 }
 
-export function FleetBoard({ issues }: FleetBoardProps) {
+export function FleetBoard({ issues, epicCosts }: FleetBoardProps) {
   const apps = buildFleetApps(issues);
 
   const grouped = new Map<FleetStage, typeof apps>();
@@ -33,6 +35,7 @@ export function FleetBoard({ issues }: FleetBoardProps) {
           key={stage}
           stage={stage}
           apps={grouped.get(stage) ?? []}
+          epicCosts={epicCosts}
         />
       ))}
     </div>

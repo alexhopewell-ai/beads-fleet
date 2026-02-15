@@ -3,14 +3,16 @@ import {
   FLEET_STAGE_CONFIG,
   type FleetApp,
   type FleetStage,
+  type EpicCost,
 } from "./fleet-utils";
 
 interface FleetColumnProps {
   stage: FleetStage;
   apps: FleetApp[];
+  epicCosts?: Map<string, EpicCost>;
 }
 
-export function FleetColumn({ stage, apps }: FleetColumnProps) {
+export function FleetColumn({ stage, apps, epicCosts }: FleetColumnProps) {
   const config = FLEET_STAGE_CONFIG[stage];
 
   return (
@@ -34,7 +36,13 @@ export function FleetColumn({ stage, apps }: FleetColumnProps) {
         {apps.length === 0 ? (
           <p className="text-center text-sm text-gray-500 py-8">No apps</p>
         ) : (
-          apps.map((app) => <FleetCard key={app.epic.id} app={app} />)
+          apps.map((app) => (
+            <FleetCard
+              key={app.epic.id}
+              app={app}
+              cost={epicCosts?.get(app.epic.id)}
+            />
+          ))
         )}
       </div>
     </div>

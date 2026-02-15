@@ -2,18 +2,34 @@
 
 import { useMemo } from "react";
 import { FleetBoard } from "@/components/fleet/FleetBoard";
+import { buildFleetApps, computeEpicCosts } from "@/components/fleet/fleet-utils";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { CardSkeleton } from "@/components/ui/LoadingSkeleton";
 import { useIssues } from "@/hooks/useIssues";
+import { useTokenUsageSummary } from "@/hooks/useTokenUsage";
 
 export default function FleetPage() {
   const { data, isLoading, error, refetch } = useIssues();
+  const { data: tokenData } = useTokenUsageSummary();
 
   const allIssues = useMemo(() => data?.all_issues ?? [], [data]);
   const epicCount = useMemo(
     () => allIssues.filter((i) => i.issue_type === "epic").length,
     [allIssues],
   );
+
+  const epicCosts = useMemo(() => {
+    if (!tokenData?.byIssue) return undefined;
+    const apps = buildFleetApps(allIssues);
+    return computeEpicCosts(apps, tokenData.byIssue);
+  }, [allIssues, tokenData]);
+
+  const totalFleetCost = useMemo(() => {
+    if (!epicCosts) return 0;
+    let sum = 0;
+    for (const cost of epicCosts.values()) sum += cost.totalCost;
+    return sum;
+  }, [epicCosts]);
 
   return (
     <div className="flex flex-col h-full">
@@ -25,9 +41,16 @@ export default function FleetPage() {
           </p>
         </div>
         {data && (
-          <span className="text-sm text-gray-400">
-            {epicCount} app{epicCount !== 1 ? "s" : ""}
-          </span>
+          <div className="text-right">
+            <span className="text-sm text-gray-400">
+              {epicCount} app{epicCount !== 1 ? "s" : ""}
+            </span>
+            {totalFleetCost > 0 && (
+              <div className="text-xs font-mono text-amber-400">
+                Fleet total: ${totalFleetCost.toFixed(2)}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -55,7 +78,7 @@ export default function FleetPage() {
         </div>
       )}
 
-      {data && <FleetBoard issues={allIssues} />}
+      {data && <FleetBoard issues={allIssues} epicCosts={epicCosts} />}
 
       {data && epicCount === 0 && (
         <div className="flex-1 flex items-center justify-center">

@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { useIssueDetail } from "@/hooks/useIssueDetail";
 import { useIssues } from "@/hooks/useIssues";
-import { useTokenUsage } from "@/hooks/useTokenUsage";
+import { useTokenUsage, useTokenUsageSummary } from "@/hooks/useTokenUsage";
 import { useIssueAction } from "@/hooks/useIssueAction";
+import { buildFleetApps, computeEpicCosts } from "@/components/fleet/fleet-utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PriorityIndicator } from "@/components/ui/PriorityIndicator";
 import { IssueTypeIcon } from "@/components/ui/IssueTypeIcon";
@@ -249,6 +250,7 @@ export default function IssueDetailPage() {
   const { data: planData } = useIssues();
   const allIssues = planData?.all_issues ?? [];
   const { data: tokenRecords } = useTokenUsage(issueId ?? undefined);
+  const { data: tokenSummary } = useTokenUsageSummary();
 
   // Use plan_issue for graph data (blocked_by, blocks), raw_issue for detail fields
   const planIssue = data?.plan_issue ?? null;
@@ -310,6 +312,16 @@ export default function IssueDetailPage() {
 
   // --- Epic children (issues whose epic field points to this issue) ---
   const epicChildren = allIssues.filter((i) => i.epic === issue.id);
+
+  // --- Epic cost (for epic-type issues, aggregate cost of self + children) ---
+  const epicCost = issue.issue_type === "epic" && tokenSummary?.byIssue
+    ? (() => {
+        const apps = buildFleetApps(allIssues).filter((a) => a.epic.id === issue.id);
+        if (apps.length === 0) return null;
+        const costs = computeEpicCosts(apps, tokenSummary.byIssue);
+        return costs.get(issue.id) ?? null;
+      })()
+    : null;
 
   // --- Labels ---
   const labels = rawIssue?.labels ?? issue.labels ?? [];
@@ -423,6 +435,69 @@ export default function IssueDetailPage() {
               );
             })()}
           </section>
+
+          {/* Epic Cost Breakdown (for epics with token data) */}
+          {epicCost && epicCost.totalCost > 0 && (
+            <section className="card p-5">
+              <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500 mb-3">
+                App Cost
+              </h2>
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <div>
+                  <p className="text-xs text-gray-500">Total Cost</p>
+                  <p className="text-lg font-bold text-amber-400">
+                    ${epicCost.totalCost.toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Sessions</p>
+                  <p className="text-lg font-bold text-white">
+                    {epicCost.totalSessions}
+                  </p>
+                </div>
+              </div>
+              {epicCost.phases.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-500">By Phase</p>
+                  {epicCost.phases.map((p) => {
+                    const phasePct = epicCost.totalCost > 0
+                      ? Math.round((p.cost / epicCost.totalCost) * 100)
+                      : 0;
+                    const phaseColors: Record<string, string> = {
+                      research: "from-blue-500 to-blue-400",
+                      development: "from-amber-500 to-amber-400",
+                      submission: "from-purple-500 to-purple-400",
+                      other: "from-gray-500 to-gray-400",
+                    };
+                    const phaseTextColors: Record<string, string> = {
+                      research: "text-blue-400",
+                      development: "text-amber-400",
+                      submission: "text-purple-400",
+                      other: "text-gray-400",
+                    };
+                    return (
+                      <div key={p.phase}>
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className={`text-xs font-medium capitalize ${phaseTextColors[p.phase] ?? "text-gray-400"}`}>
+                            {p.phase}
+                          </span>
+                          <span className="text-xs font-mono text-gray-400">
+                            ${p.cost.toFixed(2)} ({phasePct}%)
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full bg-gradient-to-r ${phaseColors[p.phase] ?? "from-gray-500 to-gray-400"}`}
+                            style={{ width: `${phasePct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Token Usage */}
           {tokenRecords && tokenRecords.length > 0 && (
