@@ -1,15 +1,87 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PriorityIndicator } from "@/components/ui/PriorityIndicator";
 import { IssueTypeIcon } from "@/components/ui/IssueTypeIcon";
-import type { PlanIssue } from "@/lib/types";
+import { useIssueAction } from "@/hooks/useIssueAction";
+import type { IssueStatus, PlanIssue } from "@/lib/types";
 
 interface IssueDetailPanelProps {
   issue: PlanIssue;
   allIssues: PlanIssue[];
   onClose: () => void;
+}
+
+function CompactActionButtons({ issueId, status }: { issueId: string; status: IssueStatus }) {
+  const mutation = useIssueAction();
+  const [closeReason, setCloseReason] = useState("");
+  const [showCloseInput, setShowCloseInput] = useState(false);
+
+  const handleStart = () => mutation.mutate({ issueId, action: "start" });
+  const handleReopen = () => mutation.mutate({ issueId, action: "reopen" });
+  const handleClose = () => {
+    mutation.mutate(
+      { issueId, action: "close", reason: closeReason || undefined },
+      { onSuccess: () => { setShowCloseInput(false); setCloseReason(""); } },
+    );
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        {status === "open" && (
+          <button
+            onClick={handleStart}
+            disabled={mutation.isPending}
+            className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500 disabled:opacity-50 transition-colors"
+          >
+            {mutation.isPending ? "Starting..." : "Start Work"}
+          </button>
+        )}
+        {(status === "in_progress" || status === "blocked" || status === "deferred") && (
+          <button
+            onClick={() => showCloseInput ? handleClose() : setShowCloseInput(true)}
+            disabled={mutation.isPending}
+            className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
+          >
+            {mutation.isPending ? "Closing..." : showCloseInput ? "Confirm" : "Close"}
+          </button>
+        )}
+        {status === "closed" && (
+          <button
+            onClick={handleReopen}
+            disabled={mutation.isPending}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
+          >
+            {mutation.isPending ? "Reopening..." : "Reopen"}
+          </button>
+        )}
+      </div>
+      {showCloseInput && (status === "in_progress" || status === "blocked" || status === "deferred") && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={closeReason}
+            onChange={(e) => setCloseReason(e.target.value)}
+            placeholder="Reason (optional)"
+            className="flex-1 rounded-md border border-border-default bg-surface-2 px-2 py-1 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+            onKeyDown={(e) => { if (e.key === "Enter") handleClose(); if (e.key === "Escape") setShowCloseInput(false); }}
+            autoFocus
+          />
+          <button
+            onClick={() => { setShowCloseInput(false); setCloseReason(""); }}
+            className="text-xs text-gray-500 hover:text-gray-300"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+      {mutation.isError && (
+        <p className="text-xs text-red-400">{mutation.error.message}</p>
+      )}
+    </div>
+  );
 }
 
 function resolveIssues(ids: string[], allIssues: PlanIssue[]): PlanIssue[] {
@@ -81,6 +153,9 @@ export function IssueDetailPanel({
             <StatusBadge status={issue.status} size="md" />
             <PriorityIndicator priority={issue.priority} showLabel />
           </div>
+
+          {/* Action Buttons */}
+          <CompactActionButtons issueId={issue.id} status={issue.status} />
 
           {/* Owner */}
           <div>

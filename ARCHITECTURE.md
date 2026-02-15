@@ -161,7 +161,7 @@ Or add it directly to `~/.beads-web.json`:
 ### Kanban Board
 - Columns by status: open, in_progress, blocked, closed
 - Sorted by priority within each column
-- Click-to-open slide-in detail panel with full issue info and dependencies
+- Click-to-open slide-in detail panel with full issue info, dependencies, and **workflow action buttons**
 
 ### Graph Analytics (Insights)
 - Bottlenecks (betweenness centrality) — issues that are gateway dependencies
@@ -202,6 +202,7 @@ Or add it directly to `~/.beads-web.json`:
 
 ### Issue Detail Page
 - Full description, status, priority, owner, labels, type
+- **Workflow action buttons:** Start Work (open), Close with reason (in_progress/blocked/deferred), Reopen (closed)
 - Dependency tree: blocked by / unblocks (with titles resolved)
 - Epic association
 - Token usage sessions table
@@ -263,6 +264,7 @@ bv CLI (--robot-plan/insights/priority/diff)                            │
 |----------|--------|---------|-------|
 | `/api/issues` | GET | `RobotPlan` (all_issues, tracks, summary) | Supports `__all__` aggregation |
 | `/api/issues/[id]` | GET | `{ plan_issue, raw_issue }` | Single issue with raw JSONL data |
+| `/api/issues/[id]/action` | POST | `{ success, action, issueId }` | Body: `{ action: "start"\|"close"\|"reopen", reason? }`. Shells out to `bd` CLI |
 | `/api/insights` | GET | `RobotInsights` (bottlenecks, keystones, etc.) | Graph metrics |
 | `/api/priority` | GET | `RobotPriority` (recommendations[]) | Priority misalignment detection |
 | `/api/diff?since=REF` | GET | `RobotDiff` (changes[]) | Git ref validated against safe pattern |
@@ -325,6 +327,7 @@ All TypeScript types:
 | `useDiff(since)` | `/api/diff?since=X` -> `RobotDiff` | none |
 | `useHealth()` | `/api/health` | 60s |
 | `useRepos()` | `/api/repos` -> `RepoStore` | none (60s stale) |
+| `useIssueAction()` | POST `/api/issues/[id]/action` | invalidates issues, issue, insights, priority |
 | `useRepoMutation()` | POST `/api/repos` | invalidates all queries |
 | `useTokenUsage(issueId?)` | `/api/token-usage` | 60s |
 | `useTokenUsageSummary()` | `/api/token-usage?summary=true` | 60s |
@@ -380,7 +383,7 @@ Dark mode with 4-tier surface palette:
 
 1. **Schema tolerance:** SQLite reader checks which columns exist via `PRAGMA table_info` before querying. Different beads versions have different schemas (e.g. `story_points` is optional).
 2. **Graceful degradation:** Every data path has a fallback chain. Never crashes on missing data.
-3. **Security:** CLI calls use `execFile` (not `exec`). Diff `since` param validated against safe regex. No user-writeable mutations to issue data (read-only dashboard).
+3. **Security:** CLI calls use `execFile` (not `exec`). Diff `since` param validated against safe regex. Issue mutations go through `bd` CLI (validated issue ID + action).
 4. **Cache invalidation:** bv-client has 10s server TTL. React Query has 15s stale time + polling. Repo switch invalidates everything.
 
 ## Claude Code Hooks
@@ -427,6 +430,7 @@ src/
     api/
       issues/route.ts       # GET issues (supports __all__)
       issues/[id]/route.ts  # GET single issue
+      issues/[id]/action/route.ts  # POST start/close/reopen
       insights/route.ts     # GET graph metrics
       priority/route.ts     # GET priority recommendations
       diff/route.ts         # GET diff since git ref
@@ -450,6 +454,7 @@ src/
     usePriority.ts          # Priority recommendations hook
     useDiff.ts              # Diff hook
     useHealth.ts            # Health check hook
+    useIssueAction.ts       # Issue status mutation (start/close/reopen)
     useRepos.ts             # Repo config + mutation hook
     useTokenUsage.ts        # Token usage hooks
     useKeyboardShortcuts.ts # Keyboard navigation

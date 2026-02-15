@@ -2,14 +2,16 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useState } from "react";
 import { useIssueDetail } from "@/hooks/useIssueDetail";
 import { useIssues } from "@/hooks/useIssues";
 import { useTokenUsage } from "@/hooks/useTokenUsage";
+import { useIssueAction } from "@/hooks/useIssueAction";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PriorityIndicator } from "@/components/ui/PriorityIndicator";
 import { IssueTypeIcon } from "@/components/ui/IssueTypeIcon";
 import { ErrorState } from "@/components/ui/ErrorState";
-import type { PlanIssue } from "@/lib/types";
+import type { IssueStatus, PlanIssue } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -136,6 +138,94 @@ function DependencyList({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Action buttons
+// ---------------------------------------------------------------------------
+
+function IssueActionButtons({ issueId, status }: { issueId: string; status: IssueStatus }) {
+  const mutation = useIssueAction();
+  const [closeReason, setCloseReason] = useState("");
+  const [showCloseInput, setShowCloseInput] = useState(false);
+
+  const handleStart = () => mutation.mutate({ issueId, action: "start" });
+  const handleReopen = () => mutation.mutate({ issueId, action: "reopen" });
+  const handleClose = () => {
+    mutation.mutate(
+      { issueId, action: "close", reason: closeReason || undefined },
+      { onSuccess: () => { setShowCloseInput(false); setCloseReason(""); } },
+    );
+  };
+
+  return (
+    <div className="space-y-2">
+      {status === "open" && (
+        <button
+          onClick={handleStart}
+          disabled={mutation.isPending}
+          className="w-full rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-white hover:bg-amber-500 disabled:opacity-50 transition-colors"
+        >
+          {mutation.isPending ? "Starting..." : "Start Work"}
+        </button>
+      )}
+
+      {(status === "in_progress" || status === "blocked" || status === "deferred") && (
+        <>
+          {!showCloseInput ? (
+            <button
+              onClick={() => setShowCloseInput(true)}
+              disabled={mutation.isPending}
+              className="w-full rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
+            >
+              Close
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={closeReason}
+                onChange={(e) => setCloseReason(e.target.value)}
+                placeholder="Close reason (optional)"
+                className="w-full rounded-md border border-border-default bg-surface-2 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                onKeyDown={(e) => { if (e.key === "Enter") handleClose(); if (e.key === "Escape") setShowCloseInput(false); }}
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleClose}
+                  disabled={mutation.isPending}
+                  className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
+                >
+                  {mutation.isPending ? "Closing..." : "Confirm"}
+                </button>
+                <button
+                  onClick={() => { setShowCloseInput(false); setCloseReason(""); }}
+                  className="rounded-md bg-surface-2 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {status === "closed" && (
+        <button
+          onClick={handleReopen}
+          disabled={mutation.isPending}
+          className="w-full rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
+        >
+          {mutation.isPending ? "Reopening..." : "Reopen"}
+        </button>
+      )}
+
+      {mutation.isError && (
+        <p className="text-xs text-red-400">{mutation.error.message}</p>
+      )}
     </div>
   );
 }
@@ -363,6 +453,9 @@ export default function IssueDetailPage() {
               </h3>
               <StatusBadge status={issue.status} size="md" />
             </div>
+
+            {/* Action Buttons */}
+            <IssueActionButtons issueId={issue.id} status={issue.status} />
 
             {/* Priority */}
             <div>
