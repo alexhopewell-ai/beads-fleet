@@ -204,7 +204,8 @@ Or add it directly to `~/.beads-web.json`:
 - Full description, status, priority, owner, labels, type
 - **Workflow action buttons:** Start Work (open), Close with reason (in_progress/blocked/deferred), Reopen (closed)
 - Dependency tree: blocked by / unblocks (with titles resolved)
-- Epic association
+- **Epic children:** For epic issues, lists all child issues (computed from `allIssues` where `issue.epic === epicId`)
+- **Parent epic link:** For child issues, sidebar shows clickable link to parent epic
 - Token usage sessions table
 - Timestamps (created, updated, closed) and close reason
 
