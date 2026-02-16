@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
 
-The first web frontend for Beads. Until now, interaction with Beads has been limited to the CLI (`bd`) and the terminal TUI (`bv` / beads_viewer). Beads Web gives teams visual, real-time access to their issue data -- dependencies, priorities, graph-based insights, and more -- through a dark-themed web UI.
+A web frontend for Beads that gives teams visual, real-time access to their issue data -- dependencies, priorities, graph-based insights, and more -- through a dark-themed web UI.
 
 Beyond issue visualization, Beads Web includes a **pipeline orchestration layer** for managing epics through multi-stage workflows. Track projects from idea through research, development, and delivery on a kanban board, with one-click agent launches that spawn [Claude Code](https://claude.ai/claude-code) sessions to do the work. Pipeline labels are managed automatically as agents start and finish, and token usage is tracked per-project and per-phase. If [Gastown](https://github.com/steveyegge/gastown) is overkill for your requirements, you can use Beads Web to build your own factory backend for autonomous project delivery.
 
