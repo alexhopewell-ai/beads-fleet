@@ -284,23 +284,43 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: health } = useHealth();
   const bvAvailable = health?.bv_available ?? false;
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside className="hidden lg:flex lg:flex-col w-64 bg-surface-1 border-r border-border-default z-30">
+    <aside
+      className={`hidden lg:flex lg:flex-col bg-surface-1 border-r border-border-default z-30 transition-all duration-200 ${
+        collapsed ? "w-16" : "w-64"
+      }`}
+    >
       {/* Logo / Brand */}
-      <div className="flex items-center gap-2 px-6 h-16 border-b border-border-default">
+      <div className="flex items-center gap-2 px-3 h-16 border-b border-border-default">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/icon.svg" alt="Beads" className="w-8 h-8 rounded-lg" />
-        <span className="text-lg font-semibold text-white tracking-tight">
-          Beads Fleet
-        </span>
+        <img src="/icon.svg" alt="Beads" className="w-8 h-8 rounded-lg shrink-0" />
+        {!collapsed && (
+          <span className="text-lg font-semibold text-white tracking-tight">
+            Beads Fleet
+          </span>
+        )}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="ml-auto p-1 rounded hover:bg-surface-2 text-gray-400 hover:text-gray-200 transition-colors shrink-0"
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            {collapsed ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7M19 19l-7-7 7-7" />
+            )}
+          </svg>
+        </button>
       </div>
 
       {/* Repo Selector */}
-      <RepoSelector />
+      {!collapsed && <RepoSelector />}
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className={`flex-1 ${collapsed ? "px-2" : "px-3"} py-4 space-y-1`}>
         {NAV_ITEMS.map((item) => {
           const isActive =
             item.href === "/"
@@ -311,8 +331,9 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              title={collapsed ? item.label : undefined}
               className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium
+                flex items-center ${collapsed ? "justify-center" : "gap-3"} ${collapsed ? "px-2" : "px-3"} py-2.5 rounded-md text-sm font-medium
                 transition-colors duration-150
                 ${
                   isActive
@@ -322,23 +343,23 @@ export function Sidebar() {
               `}
             >
               {item.icon}
-              {item.label}
+              {!collapsed && item.label}
             </Link>
           );
         })}
       </nav>
 
       {/* Graph Health */}
-      <div className="px-4 py-2 border-t border-border-default">
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+      <div className={`${collapsed ? "px-2" : "px-4"} py-2 border-t border-border-default`}>
+        <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2"} text-xs text-gray-500`}>
           <span className={bvAvailable ? "text-status-open" : "text-status-progress"}>●</span>
-          <span>{bvAvailable ? "bv connected" : "JSONL fallback"}</span>
+          {!collapsed && <span>{bvAvailable ? "bv connected" : "JSONL fallback"}</span>}
         </div>
       </div>
 
       {/* Bottom Section */}
-      <div className="px-6 py-4 border-t border-border-default">
-        <p className="text-xs text-gray-500">Beads Fleet v0.1</p>
+      <div className={`${collapsed ? "px-2" : "px-6"} py-4 border-t border-border-default`}>
+        {!collapsed && <p className="text-xs text-gray-500">Beads Fleet v0.1</p>}
       </div>
     </aside>
   );

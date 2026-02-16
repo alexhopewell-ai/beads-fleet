@@ -93,12 +93,12 @@ export function FleetCard({ app, cost, onPipelineAction, agentRunning }: FleetCa
   return (
     <Link
       href={`/issue/${epic.id}`}
-      className="card-hover p-3 cursor-pointer block"
+      className="card-hover p-2 cursor-pointer block"
     >
       {/* Header: ID + Priority + Agent indicator */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-gray-400">{epic.id}</span>
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-[10px] text-gray-400">{epic.id}</span>
           {epicAgentRunning && (
             <span className="relative flex h-2.5 w-2.5" title="Agent running">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -110,7 +110,7 @@ export function FleetCard({ app, cost, onPipelineAction, agentRunning }: FleetCa
       </div>
 
       {/* App name */}
-      <h3 className="text-sm font-medium mb-2 line-clamp-2">{appName}</h3>
+      <h3 className="text-xs font-medium mb-1.5 line-clamp-2">{appName}</h3>
 
       {/* Progress bar */}
       {progress.total > 0 && (

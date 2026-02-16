@@ -92,11 +92,11 @@ export default function FleetPage() {
       )}
 
       {isLoading && (
-        <div className="flex gap-4 overflow-x-auto flex-1 pb-4">
+        <div className="flex gap-2 overflow-x-auto flex-1 pb-4">
           {Array.from({ length: 9 }).map((_, col) => (
             <div
               key={col}
-              className="min-w-[260px] max-w-[300px] flex-shrink-0 space-y-2"
+              className="min-w-[180px] max-w-[220px] flex-shrink-0 space-y-1.5"
             >
               <div className="h-8 w-32 animate-pulse bg-surface-2 rounded mb-3" />
               {Array.from({ length: 2 }).map((_, row) => (
