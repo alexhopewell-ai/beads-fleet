@@ -68,7 +68,7 @@ describe("Sidebar", () => {
 
   it("shows version text when expanded", () => {
     renderSidebar();
-    expect(screen.getByText("Beads Fleet v0.1")).toBeInTheDocument();
+    expect(screen.getByText("Beads Fleet v1.0")).toBeInTheDocument();
   });
 
   it("shows bv status text when expanded", () => {
@@ -106,7 +106,7 @@ describe("Sidebar", () => {
   it("hides version text when collapsed", () => {
     renderSidebar();
     fireEvent.click(getToggleButton());
-    expect(screen.queryByText("Beads Fleet v0.1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Beads Fleet v1.0")).not.toBeInTheDocument();
   });
 
   it("hides bv status text when collapsed", () => {

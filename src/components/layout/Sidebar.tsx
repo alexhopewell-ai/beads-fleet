@@ -359,7 +359,7 @@ export function Sidebar() {
 
       {/* Bottom Section */}
       <div className={`${collapsed ? "px-2" : "px-6"} py-4 border-t border-border-default`}>
-        {!collapsed && <p className="text-xs text-gray-500">Beads Fleet v0.1</p>}
+        {!collapsed && <p className="text-xs text-gray-500">Beads Fleet v1.0</p>}
       </div>
     </aside>
   );
