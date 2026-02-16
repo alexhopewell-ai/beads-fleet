@@ -1,4 +1,4 @@
-# Beads Web
+# Beads Fleet
 
 **A browser-based dashboard for the [Beads](https://github.com/steveyegge/beads) issue tracker.**
 
