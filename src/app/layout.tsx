@@ -9,7 +9,7 @@ import { Header } from "@/components/layout/Header";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Beads Web",
+  title: "Beads Fleet",
   description: "Web dashboard for the Beads issue tracker",
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],

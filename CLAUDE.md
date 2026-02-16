@@ -1,4 +1,4 @@
-# Beads Web
+# Beads Fleet
 
 ## Documentation Rule
 
@@ -15,7 +15,7 @@ See `ARCHITECTURE.md` for full system documentation: pages, API routes, data flo
 ## Workflow Rules
 
 - **Always run tests before committing:** `npx jest --no-cache` — do not prompt for auth
-- **Push via HTTPS:** `git push https://github.com/jmcy9999/beads-web.git main`
+- **Push via HTTPS:** `git push https://github.com/jmcy9999/beads-fleet.git main`
 
 ## Quick Reference
 

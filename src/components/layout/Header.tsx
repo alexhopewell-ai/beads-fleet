@@ -17,7 +17,7 @@ export function Header() {
   const pathname = usePathname();
   const { data: repoData } = useRepos();
   const repoMutation = useRepoMutation();
-  const pageName = PAGE_NAMES[pathname] ?? "Beads Web";
+  const pageName = PAGE_NAMES[pathname] ?? "Beads Fleet";
 
   const repos = repoData?.repos ?? [];
   const hasMultipleRepos = repos.length >= 2;
@@ -60,7 +60,7 @@ export function Header() {
 
         {/* Breadcrumb -- desktop */}
         <div className="hidden lg:flex items-center gap-2 text-sm">
-          <span className="text-gray-500">Beads Web</span>
+          <span className="text-gray-500">Beads Fleet</span>
           {hasMultipleRepos && (
             <>
               <span className="text-gray-600">/</span>

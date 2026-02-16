@@ -1,10 +1,10 @@
-# Beads Web User Guide
+# Beads Fleet User Guide
 
 ## 1. Introduction
 
-### What is Beads Web?
+### What is Beads Fleet?
 
-Beads Web is a browser-based dashboard for the **Beads** issue tracker. It gives you a visual, interactive interface to view and analyze your project's issues without leaving the browser. Think of it as the web companion to the existing command-line tools.
+Beads Fleet is a browser-based dashboard for the **Beads** issue tracker. It gives you a visual, interactive interface to view and analyze your project's issues without leaving the browser. Think of it as the web companion to the existing command-line tools.
 
 ### What is Beads?
 
@@ -21,7 +21,7 @@ bd sync                          # Sync with git
 
 ### What is beads_viewer / bv?
 
-`bv` (beads_viewer) is a terminal TUI that reads your Beads data and computes graph-theoretic metrics on the dependency relationships between issues. It calculates PageRank, Betweenness Centrality, HITS scores, cycle detection, and more. Its "Robot Protocol" (`bv --robot-*` commands) outputs structured JSON that Beads Web consumes.
+`bv` (beads_viewer) is a terminal TUI that reads your Beads data and computes graph-theoretic metrics on the dependency relationships between issues. It calculates PageRank, Betweenness Centrality, HITS scores, cycle detection, and more. Its "Robot Protocol" (`bv --robot-*` commands) outputs structured JSON that Beads Fleet consumes.
 
 ### How They Relate
 
@@ -29,7 +29,7 @@ These three tools form a pipeline:
 
 1. **bd** manages issues -- creating, updating, closing, and syncing them in your git repo.
 2. **bv** analyzes issues -- reading the dependency graph and computing metrics that reveal bottlenecks, critical paths, and circular dependencies.
-3. **Beads Web** displays issues visually -- presenting the data from bd and the analytics from bv in an interactive browser dashboard.
+3. **Beads Fleet** displays issues visually -- presenting the data from bd and the analytics from bv in an interactive browser dashboard.
 
 Both tools are installed automatically by `npm install`. `bd` is bundled as the `@beads/bd` npm dependency. `bv` is downloaded from [GitHub releases](https://github.com/Dicklesworthstone/beads_viewer) by the `scripts/install-bv.sh` postinstall script. If the `bv` download fails (no internet, unsupported platform), the app falls back to SQLite-based analytics -- you get all issue data but no graph-based metrics. With `bv` present, you get the full analytics experience out of the box.
 
@@ -48,8 +48,8 @@ The `bd` CLI and `bv` (beads_viewer) are both installed automatically when you r
 ### Installation
 
 ```bash
-git clone <repository-url> beads-web
-cd beads-web
+git clone <repository-url> beads-fleet
+cd beads-fleet
 npm install
 ```
 
@@ -80,7 +80,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### First-Run Wizard
 
-If no repositories are configured, Beads Web displays a setup wizard on first launch. The wizard walks you through three steps:
+If no repositories are configured, Beads Fleet displays a setup wizard on first launch. The wizard walks you through three steps:
 
 1. **Welcome** -- introduces the application.
 2. **Prerequisites Check** -- verifies that Node.js is running and that the bundled `bv` is available.
@@ -174,7 +174,7 @@ Click any card to open a slide-in detail panel on the right side of the screen. 
 
 ## 5. Insights (/insights)
 
-The Insights page surfaces graph-based analytics about your issue dependency network. This is where Beads Web differentiates itself from a simple task board -- it shows you the structural properties of your work graph.
+The Insights page surfaces graph-based analytics about your issue dependency network. This is where Beads Fleet differentiates itself from a simple task board -- it shows you the structural properties of your work graph.
 
 ### Metric Panels
 
@@ -211,7 +211,7 @@ At the bottom of the page, an interactive dependency graph renders all issues an
 
 ### Without bv
 
-Since `bv` is bundled with Beads Web, this scenario is uncommon. However, if `bv` is not reachable (for example, in a restricted deployment environment), the Insights page still loads but all metric panels will be empty. A notice explains that `bv` is needed for graph-based insights. The total issue count is still displayed.
+Since `bv` is bundled with Beads Fleet, this scenario is uncommon. However, if `bv` is not reachable (for example, in a restricted deployment environment), the Insights page still loads but all metric panels will be empty. A notice explains that `bv` is needed for graph-based insights. The total issue count is still displayed.
 
 ---
 
@@ -288,7 +288,7 @@ A **Back** button at the top of the page returns you to whatever page you naviga
 
 ## 8. Settings (/settings)
 
-The Settings page lets you manage which Beads-enabled repositories Beads Web tracks.
+The Settings page lets you manage which Beads-enabled repositories Beads Fleet tracks.
 
 ### Repository List
 
@@ -320,7 +320,7 @@ At the bottom of the sidebar (visible on all pages), a status indicator shows:
 
 ## 9. Multi-Repo Workflow
 
-Beads Web supports working with multiple Beads-enabled projects.
+Beads Fleet supports working with multiple Beads-enabled projects.
 
 ### Adding Repositories
 
@@ -331,7 +331,7 @@ You can add repositories in two ways:
 
 ### Switching Repositories
 
-When you have two or more repositories configured, a **repo selector dropdown** appears in the sidebar (below the Beads Web logo). Click it to see all your repos, then click one to switch. The active repo gets a checkmark.
+When you have two or more repositories configured, a **repo selector dropdown** appears in the sidebar (below the Beads Fleet logo). Click it to see all your repos, then click one to switch. The active repo gets a checkmark.
 
 Switching repos immediately refreshes all data across the entire application -- Dashboard, Board, Insights, and Time Travel all update to reflect the newly selected project.
 
@@ -389,7 +389,7 @@ A multi-select dropdown lets you filter by issue type:
 
 ### Built-In Saved Views (Recipes)
 
-Beads Web ships with six built-in views that apply common filter combinations with one click:
+Beads Fleet ships with six built-in views that apply common filter combinations with one click:
 
 | View | What it shows |
 |------|---------------|
@@ -418,7 +418,7 @@ When any filters are active, a **Clear** button appears that resets all filters 
 
 ## 11. Keyboard Shortcuts
 
-Beads Web supports keyboard shortcuts for fast navigation, matching the key bindings from `bv` where applicable.
+Beads Fleet supports keyboard shortcuts for fast navigation, matching the key bindings from `bv` where applicable.
 
 | Key | Action |
 |-----|--------|
@@ -441,11 +441,11 @@ Press `?` at any time to see the shortcuts help overlay as a reminder.
 
 ## 12. Data Sources
 
-Beads Web uses a layered data strategy, automatically selecting the best available source.
+Beads Fleet uses a layered data strategy, automatically selecting the best available source.
 
 ### Primary: bv Robot Protocol
 
-The `bv` CLI is available by default after `npm install` (downloaded from GitHub releases by the postinstall script). Beads Web calls `bv --robot-*` commands to get structured JSON with full graph metrics:
+The `bv` CLI is available by default after `npm install` (downloaded from GitHub releases by the postinstall script). Beads Fleet calls `bv --robot-*` commands to get structured JSON with full graph metrics:
 
 | Command | Data Returned |
 |---------|---------------|
@@ -486,12 +486,12 @@ Data refreshes automatically through React Query polling. The default interval i
 
 ## 13. Docker Deployment
 
-Beads Web includes a Dockerfile and Docker Compose configuration for containerized deployment.
+Beads Fleet includes a Dockerfile and Docker Compose configuration for containerized deployment.
 
 ### Building the Image
 
 ```bash
-docker build -t beads-web .
+docker build -t beads-fleet .
 ```
 
 ### Running with Docker
@@ -500,7 +500,7 @@ docker build -t beads-web .
 docker run -p 3000:3000 \
   -v /path/to/your/project:/data/project:ro \
   -e BEADS_PROJECT_PATH=/data/project \
-  beads-web
+  beads-fleet
 ```
 
 This mounts your Beads-enabled project directory as a read-only volume inside the container and tells the app where to find it.

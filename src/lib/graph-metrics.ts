@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web — Graph Metrics (Fallback when bv is unavailable)
+// Beads Fleet — Graph Metrics (Fallback when bv is unavailable)
 // =============================================================================
 //
 // Computes simplified graph-based insights from issue dependency data.

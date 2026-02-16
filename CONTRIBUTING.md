@@ -1,6 +1,6 @@
-# Contributing to Beads Web
+# Contributing to Beads Fleet
 
-Welcome! Beads Web is a Next.js 14 TypeScript dashboard for the [Beads](https://github.com/jmcy9999/beads) issue tracker. Whether you are fixing a typo, reporting a bug, or building a new feature, your contributions are appreciated.
+Welcome! Beads Fleet is a Next.js 14 TypeScript dashboard for the [Beads](https://github.com/jmcy9999/beads) issue tracker. Whether you are fixing a typo, reporting a bug, or building a new feature, your contributions are appreciated.
 
 ## Code of Conduct
 
@@ -8,7 +8,7 @@ This project follows the guidelines in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Reporting Bugs
 
-Open a [GitHub Issue](https://github.com/jmcy9999/beads-web/issues) and include:
+Open a [GitHub Issue](https://github.com/jmcy9999/beads-fleet/issues) and include:
 
 1. Steps to reproduce the problem
 2. Expected behaviour
@@ -20,7 +20,7 @@ The more detail you provide, the faster we can diagnose and fix the issue.
 
 ## Suggesting Features
 
-Open a [GitHub Issue](https://github.com/jmcy9999/beads-web/issues) with the **enhancement** label. Describe the use case, the proposed behaviour, and any alternatives you considered.
+Open a [GitHub Issue](https://github.com/jmcy9999/beads-fleet/issues) with the **enhancement** label. Describe the use case, the proposed behaviour, and any alternatives you considered.
 
 ## Development Setup
 
@@ -35,8 +35,8 @@ The Beads CLI (`bd`) and beads_viewer (`bv`) are both installed automatically by
 
 1. **Fork and clone** the repository:
    ```bash
-   git clone https://github.com/<your-username>/beads-web.git
-   cd beads-web
+   git clone https://github.com/<your-username>/beads-fleet.git
+   cd beads-fleet
    ```
 2. **Install dependencies**:
    ```bash
@@ -171,6 +171,6 @@ ci: add build caching to GitHub Actions
 
 ## First-Time Contributors
 
-New here? Look for issues labelled **good first issue** in the [issue tracker](https://github.com/jmcy9999/beads-web/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22). These are scoped to be approachable without deep knowledge of the codebase.
+New here? Look for issues labelled **good first issue** in the [issue tracker](https://github.com/jmcy9999/beads-fleet/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22). These are scoped to be approachable without deep knowledge of the codebase.
 
-If you have questions at any point, feel free to open a [discussion](https://github.com/jmcy9999/beads-web/discussions) or comment on the relevant issue. We are happy to help.
+If you have questions at any point, feel free to open a [discussion](https://github.com/jmcy9999/beads-fleet/discussions) or comment on the relevant issue. We are happy to help.

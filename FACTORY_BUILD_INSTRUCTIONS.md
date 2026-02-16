@@ -1,6 +1,6 @@
 # Factory Integration: Build Instructions
 
-**For:** A new agent working in the beads_web repo
+**For:** A new agent working in the beads_fleet repo
 **From:** The cycle-apps-factory agent
 **Date:** 2026-02-15
 
@@ -10,7 +10,7 @@
 
 The Cycle Apps Factory is an autonomous iOS app-building system. It uses
 beads for all task tracking. Rather than building a separate dashboard,
-we're extending beads_web with 4 factory-specific features.
+we're extending beads_fleet with 4 factory-specific features.
 
 **The factory is operational.** Bootstrap is complete. The research agent
 produces reports at `apps/<app-name>/research/report.md` in the factory
@@ -18,9 +18,9 @@ repo. The next step is building Jane's first app, and these features will
 make that workflow smoother.
 
 **Background docs (already in this repo):**
-- `FACTORY_PLAN.md` — How the factory and beads_web collaborate
+- `FACTORY_PLAN.md` — How the factory and beads_fleet collaborate
 - `FACTORY_INTEGRATION_PLAN.md` — Detailed integration proposal
-- `ARCHITECTURE.md` — Current beads_web system architecture
+- `ARCHITECTURE.md` — Current beads_fleet system architecture
 
 ---
 
@@ -28,7 +28,7 @@ make that workflow smoother.
 
 ### Feature 1: Workflow Action Buttons (bw-270, P2)
 
-**What:** Transform beads_web from read-only to actionable. Add buttons
+**What:** Transform beads_fleet from read-only to actionable. Add buttons
 that change issue status via the `bd` CLI.
 
 **Where:** Issue detail page (`src/app/issue/[id]/page.tsx`) and
@@ -96,7 +96,7 @@ produces. These are markdown files at predictable paths in the factory repo.
    - Go/No-Go Recommendation
 
 **Constraints:**
-- Reports are read-only in beads_web (the factory agent writes them)
+- Reports are read-only in beads_fleet (the factory agent writes them)
 - Handle the case where no report exists yet (show placeholder)
 - Reports can be large (500+ lines) — consider collapsible sections
 
@@ -203,7 +203,7 @@ commit as the code change.
 
 After building each feature:
 
-1. Start beads_web: `npm run dev`
+1. Start beads_fleet: `npm run dev`
 2. Open http://localhost:3000
 3. Navigate to a factory issue (from cycle-apps-factory project)
 4. Verify the feature works as described
@@ -220,7 +220,7 @@ echo "# TestApp Research Report\n\nTest content." > \
 ## Questions?
 
 If anything is unclear, check:
-- `FACTORY_PLAN.md` in this repo — full factory-to-beads_web collaboration plan
+- `FACTORY_PLAN.md` in this repo — full factory-to-beads_fleet collaboration plan
 - `FACTORY_INTEGRATION_PLAN.md` in this repo — detailed integration proposal
 - The 4 beads: `bd show bw-ctu`, `bd show bw-270`, `bd show bw-nbv`, `bd show bw-yq1`
 - Factory standards: `/Users/janemckay/dev/claude_projects/cycle-apps-factory/standards/`

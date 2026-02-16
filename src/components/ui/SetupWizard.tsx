@@ -48,7 +48,7 @@ export function SetupWizard() {
                 <span className="text-status-open font-bold text-2xl">B</span>
               </div>
               <h1 className="text-2xl font-bold text-white">
-                Welcome to Beads Web
+                Welcome to Beads Fleet
               </h1>
               <p className="text-gray-400">
                 A visual dashboard for your Beads issue tracker. Let&apos;s get
@@ -92,7 +92,7 @@ export function SetupWizard() {
                     Node.js
                   </p>
                   <p className="text-xs text-gray-400">
-                    Running — required for Beads Web
+                    Running — required for Beads Fleet
                   </p>
                 </div>
               </div>

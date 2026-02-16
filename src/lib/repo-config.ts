@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web — Multi-Repository Configuration
+// Beads Fleet — Multi-Repository Configuration
 // =============================================================================
 //
 // Manages a list of Beads-enabled repositories. Stored as a JSON file at

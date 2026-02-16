@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web — SQLite Database Reader
+// Beads Fleet — SQLite Database Reader
 // =============================================================================
 //
 // Reads issues directly from .beads/beads.db (the source of truth) using

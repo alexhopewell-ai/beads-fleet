@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web — bv CLI Client (Robot Protocol Command Wrapper)
+// Beads Fleet — bv CLI Client (Robot Protocol Command Wrapper)
 // =============================================================================
 //
 // Executes `bv --robot-*` commands via child_process.execFile (not exec, for

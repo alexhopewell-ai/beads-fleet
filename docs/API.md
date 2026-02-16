@@ -1,4 +1,4 @@
-# Beads Web API Reference
+# Beads Fleet API Reference
 
 Full reference for all 13 API endpoints. All routes are Next.js App Router API handlers under `/src/app/api/`.
 

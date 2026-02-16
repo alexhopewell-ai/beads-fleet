@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web — Token Usage Reader
+// Beads Fleet — Token Usage Reader
 // =============================================================================
 //
 // Reads .beads/token-usage.jsonl from the active project path and provides

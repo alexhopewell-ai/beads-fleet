@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web -- Pipeline Label Management
+// Beads Fleet -- Pipeline Label Management
 // =============================================================================
 //
 // Manages pipeline labels on factory epics via the `bd` CLI.

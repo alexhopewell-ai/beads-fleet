@@ -292,7 +292,7 @@ export function Sidebar() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/icon.svg" alt="Beads" className="w-8 h-8 rounded-lg" />
         <span className="text-lg font-semibold text-white tracking-tight">
-          Beads Web
+          Beads Fleet
         </span>
       </div>
 
@@ -338,7 +338,7 @@ export function Sidebar() {
 
       {/* Bottom Section */}
       <div className="px-6 py-4 border-t border-border-default">
-        <p className="text-xs text-gray-500">Beads Web v0.1</p>
+        <p className="text-xs text-gray-500">Beads Fleet v0.1</p>
       </div>
     </aside>
   );

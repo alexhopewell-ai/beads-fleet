@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web — TypeScript Type Definitions
+// Beads Fleet — TypeScript Type Definitions
 // =============================================================================
 //
 // A. Beads core issue model (matches real .beads/issues.jsonl schema)

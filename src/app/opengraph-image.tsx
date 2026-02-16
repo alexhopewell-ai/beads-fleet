@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Beads Web - Issue Tracker Dashboard";
+export const alt = "Beads Fleet - Issue Tracker Dashboard";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -86,7 +86,7 @@ export default function OGImage() {
               letterSpacing: "-2px",
             }}
           >
-            Beads Web
+            Beads Fleet
           </div>
           <div
             style={{

@@ -1,8 +1,8 @@
-# Beads Web — Build Plan for Claude Code
+# Beads Fleet — Build Plan for Claude Code
 
 ## Project Overview
 
-Build **Beads Web** — a browser-based dashboard for the Beads issue tracker (by Steve Yegge) that gives teams visual, browser-based access to their Beads task data. This is the first web frontend for Beads — currently only a CLI (`bd`) and a terminal TUI (`bv` / beads_viewer) exist.
+Build **Beads Fleet** — a browser-based dashboard for the Beads issue tracker (by Steve Yegge) that gives teams visual, browser-based access to their Beads task data. This is the first web frontend for Beads — currently only a CLI (`bd`) and a terminal TUI (`bv` / beads_viewer) exist.
 
 ### Architecture Decision: Thin Web Wrapper over beads_viewer
 
@@ -82,7 +82,7 @@ The SQLite database (`.beads/beads.db`) is the fast local cache; JSONL is the gi
 - [ ] Initialise Next.js 14 project with App Router, TypeScript, Tailwind
 - [ ] Create project structure:
   ```
-  beads-web/
+  beads-fleet/
   ├── app/
   │   ├── layout.tsx          # Shell with sidebar nav
   │   ├── page.tsx            # Dashboard (default view)

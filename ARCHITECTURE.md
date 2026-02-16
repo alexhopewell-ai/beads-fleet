@@ -1,4 +1,4 @@
-# Beads Web Architecture
+# Beads Fleet Architecture
 
 > **Keep this document current.** Update it whenever features, data flows, APIs, or file structure change. Agents working on this codebase depend on it for context.
 
@@ -130,7 +130,7 @@ bd dep add <tests-id> <feature-id>  # Tests depend on feature
 ```bash
 bd create --title="Initialize project from template" --type=task --priority=1
 bd create --title="Configure CI/CD" --type=chore --priority=2
-bd create --title="Register with beads_web dashboard" --type=chore --priority=3
+bd create --title="Register with beads_fleet dashboard" --type=chore --priority=3
 ```
 
 **Registering a new project with the dashboard:**
@@ -457,7 +457,7 @@ Config stored in `~/.beads-web.json`:
 {
   "repos": [
     { "name": "PatchCycle", "path": "/path/to/PatchCycle" },
-    { "name": "beads_web", "path": "/path/to/beads_web" }
+    { "name": "beads_fleet", "path": "/path/to/beads_fleet" }
   ],
   "activeRepo": "/path/to/PatchCycle"  // or "__all__" for aggregation
 }

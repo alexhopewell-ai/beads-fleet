@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web — Saved Views / Recipes
+// Beads Fleet — Saved Views / Recipes
 // =============================================================================
 //
 // Defines built-in filter presets and the shape for custom saved views.

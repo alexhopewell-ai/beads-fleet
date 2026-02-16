@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web — JSONL Fallback Parser
+// Beads Fleet — JSONL Fallback Parser
 // =============================================================================
 //
 // When the `bv` CLI is not available, read .beads/issues.jsonl directly and

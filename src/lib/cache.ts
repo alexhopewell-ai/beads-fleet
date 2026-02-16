@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web — Simple TTL Cache
+// Beads Fleet — Simple TTL Cache
 // =============================================================================
 //
 // In-memory cache with time-to-live expiration. Used by bv-client to avoid

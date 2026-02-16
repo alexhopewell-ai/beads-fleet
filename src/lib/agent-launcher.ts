@@ -1,5 +1,5 @@
 // =============================================================================
-// Beads Web -- Generic Agent Launcher
+// Beads Fleet -- Generic Agent Launcher
 // =============================================================================
 //
 // Spawns Claude Code CLI as a background subprocess to run autonomous tasks

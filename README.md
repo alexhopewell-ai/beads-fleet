@@ -3,13 +3,13 @@
 **A browser-based dashboard for managing fleets of software development through an orchestrated pipeline all backed by [Beads](https://github.com/steveyegge/beads) issue tracker.**
 **Gastown was overkill for my needs so I built something simpler. This is the front end to my factory with a clear api which allows you to build a factory for your needs.**
 
-[![CI](https://github.com/jmcy9999/beads-web/actions/workflows/ci.yml/badge.svg)](https://github.com/jmcy9999/beads-web/actions/workflows/ci.yml)
+[![CI](https://github.com/jmcy9999/beads-fleet/actions/workflows/ci.yml/badge.svg)](https://github.com/jmcy9999/beads-fleet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
 
 A web frontend for Beads that gives teams visual, real-time access to their issue data -- dependencies, priorities, graph-based insights, and more -- through a dark-themed web UI.
 
-Beyond issue visualization, Beads Web includes a **pipeline orchestration layer** for managing epics through multi-stage workflows. Track projects from idea through research, development, and delivery on a kanban board, with one-click agent launches that spawn [Claude Code](https://claude.ai/claude-code) sessions to do the work. Pipeline labels are managed automatically as agents start and finish, and token usage is tracked per-project and per-phase. If [Gastown](https://github.com/steveyegge/gastown) is overkill for your requirements, you can use Beads Web to build your own factory backend for autonomous project delivery.
+Beyond issue visualization, Beads Fleet includes a **pipeline orchestration layer** for managing epics through multi-stage workflows. Track projects from idea through research, development, and delivery on a kanban board, with one-click agent launches that spawn [Claude Code](https://claude.ai/claude-code) sessions to do the work. Pipeline labels are managed automatically as agents start and finish, and token usage is tracked per-project and per-phase. If [Gastown](https://github.com/steveyegge/gastown) is overkill for your requirements, you can use Beads Fleet to build your own factory backend for autonomous project delivery.
 
 <!-- screenshot -->
 <img width="1368" height="651" alt="Screenshot 2026-02-09 at 01 20 22" src="https://github.com/user-attachments/assets/6f9c0bf4-3fa8-4f26-b45c-45f0adcc01e8" />
@@ -76,8 +76,8 @@ Beyond issue visualization, Beads Web includes a **pipeline orchestration layer*
 ## Quick Start
 
 ```bash
-git clone https://github.com/jmcy9999/beads-web.git
-cd beads-web
+git clone https://github.com/jmcy9999/beads-fleet.git
+cd beads-fleet
 npm install
 ```
 
@@ -113,8 +113,8 @@ Open [http://localhost:3000](http://localhost:3000).
 ### npm
 
 ```bash
-git clone https://github.com/jmcy9999/beads-web.git
-cd beads-web
+git clone https://github.com/jmcy9999/beads-fleet.git
+cd beads-fleet
 npm install
 npm run dev
 ```
@@ -153,7 +153,7 @@ Set these in `.env.local` for development or pass them as environment variables 
 
 ### Multi-Repo Support
 
-Beads Web can manage multiple Beads-enabled repositories. Configuration is stored in `~/.beads-web.json`.
+Beads Fleet can manage multiple Beads-enabled repositories. Configuration is stored in `~/.beads-web.json`.
 
 - **Add repos** via the Settings page or the first-run wizard
 - **Switch repos** using the sidebar dropdown or the Settings page
@@ -196,7 +196,7 @@ Shortcuts are disabled when a text input is focused.
 
 ## Architecture
 
-Beads Web is a thin wrapper over the existing Beads data layer. It does not duplicate data or maintain its own database.
+Beads Fleet is a thin wrapper over the existing Beads data layer. It does not duplicate data or maintain its own database.
 
 ```
 Browser  -->  Next.js API Routes  -->  bv CLI (Robot Protocol)
