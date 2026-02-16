@@ -1,6 +1,6 @@
 # Beads Fleet
 
-**A browser-based dashboard for the [Beads](https://github.com/steveyegge/beads) issue tracker.**
+**A browser-based dashboard for managing fleets of software development through an orchestrated pipeline all backed by [Beads](https://github.com/steveyegge/beads) issue tracker.**
 
 [![CI](https://github.com/jmcy9999/beads-web/actions/workflows/ci.yml/badge.svg)](https://github.com/jmcy9999/beads-web/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
