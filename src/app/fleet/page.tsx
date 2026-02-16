@@ -57,7 +57,7 @@ export default function FleetPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">App Fleet</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            Factory pipeline -- apps tracked as epics through build stages
+            Fleet voyage — apps tracked as ships through build stages
           </p>
         </div>
         {data && (
@@ -145,11 +145,11 @@ export default function FleetPage() {
               </svg>
             </div>
             <h3 className="text-sm font-medium text-gray-300 mb-1">
-              No apps in the fleet
+              No ships in the fleet
             </h3>
             <p className="text-xs text-gray-500">
-              Create an epic to track an app through the factory pipeline.
-              Add pipeline:* labels to move apps through stages.
+              Create an epic to launch a ship through the fleet voyage.
+              Add pipeline:* labels to move ships through stages.
             </p>
           </div>
         </div>

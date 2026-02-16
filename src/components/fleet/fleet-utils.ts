@@ -28,44 +28,44 @@ export const FLEET_STAGE_CONFIG: Record<
   FleetStage,
   { label: string; color: string; dotColor: string }
 > = {
-  idea: { label: "Ideas", color: "text-gray-400", dotColor: "bg-gray-400" },
+  idea: { label: "Harbour", color: "text-gray-400", dotColor: "bg-gray-400" },
   research: {
-    label: "In Research",
+    label: "Recon",
     color: "text-blue-400",
     dotColor: "bg-blue-400",
   },
   "research-complete": {
-    label: "Research Complete",
+    label: "Charted",
     color: "text-cyan-400",
     dotColor: "bg-cyan-400",
   },
   development: {
-    label: "In Development",
+    label: "Under Construction",
     color: "text-amber-400",
     dotColor: "bg-amber-400",
   },
   "submission-prep": {
-    label: "Prepare for Submission",
+    label: "Sea Trials",
     color: "text-orange-400",
     dotColor: "bg-orange-400",
   },
   submitted: {
-    label: "Submitted",
+    label: "Launched",
     color: "text-purple-400",
     dotColor: "bg-purple-400",
   },
   "kit-management": {
-    label: "Kit Management",
+    label: "Refit",
     color: "text-indigo-400",
     dotColor: "bg-indigo-400",
   },
   completed: {
-    label: "Completed",
+    label: "Deployed",
     color: "text-green-400",
     dotColor: "bg-green-400",
   },
   "bad-idea": {
-    label: "Bad Ideas",
+    label: "Scuttled",
     color: "text-red-400",
     dotColor: "bg-red-400",
   },

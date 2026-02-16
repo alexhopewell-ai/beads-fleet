@@ -244,13 +244,13 @@ Or add it directly to `~/.beads-web.json`:
 - Factory agent labels issues via `bd label add <id> submission:ready` etc.
 
 ### App Fleet Dashboard
-- **Pipeline view:** Epics displayed as "apps" in a factory pipeline kanban with 9 stages: Ideas | Research | Research Complete | Development | Submission Prep | Submitted | Kit Management | Completed | Bad Ideas
+- **Pipeline view:** Epics displayed as "ships" in a fleet voyage kanban with 9 stages: Harbour | Recon | Charted | Under Construction | Sea Trials | Launched | Refit | Deployed | Scuttled
 - **Compact layout:** Columns are 180-220px wide with tight gaps (gap-2), small card padding (p-2), 10px IDs, xs-size titles, uppercase column headers — optimized for fitting all stages on screen
 - **Stage detection:** Automatic based on `pipeline:*` labels on epics — `pipeline:idea`, `pipeline:research`, `pipeline:research-complete`, `pipeline:development`, `pipeline:submission-prep`, `pipeline:submitted`, `pipeline:kit-management`, `pipeline:completed`, `pipeline:bad-idea`
 - **Fleet cards:** Each app shows epic title, progress bar (closed/total children), priority, active/blocked task counts, submission status badges, cost breakdown by phase, phase history dots, stage-specific action buttons, and owner
 - **Zoom controls:** User-controlled CSS transform scaling (50%-150%) via magnifying glass +/-/reset buttons in the toolbar. Uses `transform: scale(X)` with `transformOrigin: "top left"` and compensating `width: ${100/scale}%`
 - **Column filter:** Funnel icon dropdown with checkboxes for each pipeline stage. Toggle individual columns on/off (minimum one must remain visible). "Show all" link when filtered. Filter state persisted in localStorage (`beads-fleet-visible-columns`). Funnel icon turns blue when columns are hidden
-- **Pipeline actions:** Stage-specific action buttons on each card — Start Research (idea), Stop Agent (research/development/kit-management when agent running), Send for Development / More Research / Deprioritise (research-complete), Approve Submission / Send back to Dev (submission-prep), Mark as Live (submitted). Actions dispatched via `onPipelineAction` callback to the fleet page
+- **Pipeline actions:** Stage-specific action buttons on each card — Launch Recon (Harbour), Recall Crew (Recon/Under Construction/Refit when crew aboard), Begin Construction / More Recon / Scuttle (Charted), Clear for Launch / Return to Dry Dock (Sea Trials), Mark as Deployed (Launched). Actions dispatched via `onPipelineAction` callback to the fleet page
 - **Phase history:** Each card shows a row of colored dots representing all pipeline stages — past stages solid, current stage pulsing, future stages dimmed
 - **Empty state:** Guidance on how to create epics and label children to use the fleet view
 - **Navigation:** Sidebar link + keyboard shortcut `f`
@@ -349,7 +349,7 @@ bv CLI (--robot-plan/insights/priority/diff)                            │
 |-------|------|---------------|
 | `/` | Dashboard | Summary cards (open/in_progress/blocked/closed counts), token usage totals, highest-impact issue, priority misalignment alerts, full issue table with sort/filter, recent activity feed |
 | `/board` | Kanban Board | Issues grouped by status columns (open, in_progress, blocked, closed), click-to-open detail panel |
-| `/fleet` | App Fleet | Factory pipeline kanban — epics as apps across 9 stages (Ideas through Completed), with zoom controls, column filter, and pipeline action buttons |
+| `/fleet` | App Fleet | Fleet voyage kanban — epics as ships across 9 stages (Harbour through Deployed), with zoom controls, column filter, and pipeline action buttons |
 | `/insights` | Graph Analytics | Bottlenecks, keystones, influencers, hubs, authorities (top-5 bar charts), dependency cycles, graph density, interactive ReactFlow dependency graph |
 | `/diff` | Time Travel | Compare current state against a git ref (HEAD~1/5/10/20 or custom), shows new/closed/modified/reopened issues with field-level diffs |
 | `/settings` | Settings | Add/remove/switch repos, stored in `~/.beads-web.json` |
