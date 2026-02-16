@@ -5,20 +5,21 @@ import {
   type FleetStage,
   type EpicCost,
 } from "./fleet-utils";
+import type { PipelineActionPayload } from "./FleetBoard";
 
 interface FleetColumnProps {
   stage: FleetStage;
   apps: FleetApp[];
   epicCosts?: Map<string, EpicCost>;
-  onLaunchAgent?: (epicId: string, epicTitle: string) => void;
+  onPipelineAction?: (payload: PipelineActionPayload) => void;
   agentRunning?: boolean;
 }
 
-export function FleetColumn({ stage, apps, epicCosts, onLaunchAgent, agentRunning }: FleetColumnProps) {
+export function FleetColumn({ stage, apps, epicCosts, onPipelineAction, agentRunning }: FleetColumnProps) {
   const config = FLEET_STAGE_CONFIG[stage];
 
   return (
-    <div className="min-w-[280px] max-w-[320px] flex-shrink-0 flex flex-col h-full">
+    <div className="min-w-[260px] max-w-[300px] flex-shrink-0 flex flex-col h-full">
       {/* Column header */}
       <div className="flex items-center gap-2 px-3 py-2 mb-3">
         <span
@@ -43,7 +44,7 @@ export function FleetColumn({ stage, apps, epicCosts, onLaunchAgent, agentRunnin
               key={app.epic.id}
               app={app}
               cost={epicCosts?.get(app.epic.id)}
-              onLaunchAgent={onLaunchAgent}
+              onPipelineAction={onPipelineAction}
               agentRunning={agentRunning}
             />
           ))

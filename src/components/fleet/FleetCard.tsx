@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { PriorityIndicator } from "@/components/ui/PriorityIndicator";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import type { FleetApp, EpicCost } from "./fleet-utils";
+import { isAgentRunning, type FleetApp, type EpicCost } from "./fleet-utils";
+import type { PipelineActionPayload } from "./FleetBoard";
 
 interface FleetCardProps {
   app: FleetApp;
   cost?: EpicCost;
-  onLaunchAgent?: (epicId: string, epicTitle: string) => void;
+  onPipelineAction?: (payload: PipelineActionPayload) => void;
   agentRunning?: boolean;
 }
 
@@ -16,10 +17,27 @@ const PHASE_COLORS: Record<string, string> = {
   research: "text-blue-400",
   development: "text-amber-400",
   submission: "text-purple-400",
+  "kit-management": "text-indigo-400",
   other: "text-gray-400",
 };
 
-export function FleetCard({ app, cost, onLaunchAgent, agentRunning }: FleetCardProps) {
+/** Shared style for primary action buttons on fleet cards. */
+const BTN_PRIMARY =
+  "w-full px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+
+/** Blue action button (launch/forward). */
+const BTN_BLUE = `${BTN_PRIMARY} text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30`;
+
+/** Amber action button (alternative). */
+const BTN_AMBER = `${BTN_PRIMARY} text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30`;
+
+/** Red action button (destructive/deprioritise). */
+const BTN_RED = `${BTN_PRIMARY} text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30`;
+
+/** Green action button (approve/complete). */
+const BTN_GREEN = `${BTN_PRIMARY} text-green-400 hover:text-green-300 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30`;
+
+export function FleetCard({ app, cost, onPipelineAction, agentRunning }: FleetCardProps) {
   const { epic, children, progress } = app;
   const pct =
     progress.total > 0
@@ -31,14 +49,20 @@ export function FleetCard({ app, cost, onLaunchAgent, agentRunning }: FleetCardP
   ).length;
   const blocked = children.filter((c) => c.status === "blocked").length;
 
-  // Extract app name from epic title (strip prefix like "LensCycle: " if present)
+  // Extract app name from epic title
   const appName = epic.title;
 
-  // Check for submission labels on children
-  const submissionLabels = children.flatMap(
+  // Check if this epic has an agent currently running
+  const epicAgentRunning = isAgentRunning(epic);
+
+  // Check for submission labels on the epic itself
+  const submissionLabels = (epic.labels ?? []).filter((l) => l.startsWith("submission:"));
+  // Also check children for legacy compatibility
+  const childSubmissionLabels = children.flatMap(
     (c) => c.labels?.filter((l) => l.startsWith("submission:")) ?? [],
   );
-  const uniqueSubmissionStates = [...new Set(submissionLabels.map((l) => l.slice(11)))];
+  const allSubmissionLabels = [...submissionLabels, ...childSubmissionLabels];
+  const uniqueSubmissionStates = [...new Set(allSubmissionLabels.map((l) => l.slice(11)))];
 
   const submissionStyles: Record<string, string> = {
     ready: "bg-blue-500/20 text-blue-300",
@@ -47,14 +71,35 @@ export function FleetCard({ app, cost, onLaunchAgent, agentRunning }: FleetCardP
     rejected: "bg-red-500/20 text-red-300",
   };
 
+  /** Dispatch a pipeline action, preventing the Link navigation. */
+  function handleAction(
+    e: React.MouseEvent,
+    action: PipelineActionPayload["action"],
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    onPipelineAction?.({ epicId: epic.id, epicTitle: epic.title, action });
+  }
+
+  /** Whether any agent is running globally (disables launch buttons). */
+  const anyAgentRunning = agentRunning ?? false;
+
   return (
     <Link
       href={`/issue/${epic.id}`}
       className="card-hover p-3 cursor-pointer block"
     >
-      {/* Header: ID + Priority */}
+      {/* Header: ID + Priority + Agent indicator */}
       <div className="flex items-center justify-between mb-2">
-        <span className="font-mono text-xs text-gray-400">{epic.id}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-gray-400">{epic.id}</span>
+          {epicAgentRunning && (
+            <span className="relative flex h-2.5 w-2.5" title="Agent running">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+            </span>
+          )}
+        </div>
         <PriorityIndicator priority={epic.priority} />
       </div>
 
@@ -134,19 +179,89 @@ export function FleetCard({ app, cost, onLaunchAgent, agentRunning }: FleetCardP
         </div>
       </div>
 
-      {/* Launch agent button for idea-stage apps */}
-      {app.stage === "idea" && onLaunchAgent && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onLaunchAgent(epic.id, epic.title);
-          }}
-          disabled={agentRunning}
-          className="mt-2 w-full px-3 py-1.5 text-xs font-medium rounded-md text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {agentRunning ? "Agent Running..." : "Start Research"}
-        </button>
+      {/* ---- Stage-specific action buttons ---- */}
+      {onPipelineAction && (
+        <div className="mt-2 flex flex-col gap-1.5">
+          {/* Ideas: Start Research */}
+          {app.stage === "idea" && (
+            <button
+              onClick={(e) => handleAction(e, "start-research")}
+              disabled={anyAgentRunning}
+              className={BTN_BLUE}
+            >
+              {anyAgentRunning ? "Agent Running..." : "Start Research"}
+            </button>
+          )}
+
+          {/* In Research / In Development / Kit Management (with agent): Stop Agent */}
+          {(app.stage === "research" || app.stage === "development" || app.stage === "kit-management") &&
+            epicAgentRunning && (
+              <button
+                onClick={(e) => handleAction(e, "stop-agent")}
+                className={BTN_RED}
+              >
+                Stop Agent
+              </button>
+            )}
+
+          {/* Research Complete: three options */}
+          {app.stage === "research-complete" && (
+            <>
+              <button
+                onClick={(e) => handleAction(e, "send-for-development")}
+                disabled={anyAgentRunning}
+                className={BTN_GREEN}
+              >
+                {anyAgentRunning ? "Agent Running..." : "Send for Development"}
+              </button>
+              <button
+                onClick={(e) => handleAction(e, "more-research")}
+                disabled={anyAgentRunning}
+                className={BTN_AMBER}
+              >
+                {anyAgentRunning ? "Agent Running..." : "More Research"}
+              </button>
+              <button
+                onClick={(e) => handleAction(e, "deprioritise")}
+                disabled={anyAgentRunning}
+                className={BTN_RED}
+              >
+                Deprioritise
+              </button>
+            </>
+          )}
+
+          {/* Prepare for Submission: two options */}
+          {app.stage === "submission-prep" && (
+            <>
+              <button
+                onClick={(e) => handleAction(e, "approve-submission")}
+                disabled={anyAgentRunning}
+                className={BTN_GREEN}
+              >
+                {anyAgentRunning ? "Agent Running..." : "Approve Submission"}
+              </button>
+              <button
+                onClick={(e) => handleAction(e, "send-back-to-dev")}
+                disabled={anyAgentRunning}
+                className={BTN_AMBER}
+              >
+                {anyAgentRunning ? "Agent Running..." : "Send back to Development"}
+              </button>
+            </>
+          )}
+
+          {/* Submitted: Mark as Live */}
+          {app.stage === "submitted" && (
+            <button
+              onClick={(e) => handleAction(e, "mark-as-live")}
+              disabled={anyAgentRunning}
+              className={BTN_GREEN}
+            >
+              {anyAgentRunning ? "Agent Running..." : "Mark as Live"}
+            </button>
+          )}
+        </div>
       )}
     </Link>
   );

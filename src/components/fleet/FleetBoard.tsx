@@ -7,14 +7,31 @@ import {
 } from "./fleet-utils";
 import type { PlanIssue } from "@/lib/types";
 
+export type PipelineAction =
+  | "start-research"
+  | "send-for-development"
+  | "more-research"
+  | "deprioritise"
+  | "approve-submission"
+  | "send-back-to-dev"
+  | "mark-as-live"
+  | "stop-agent";
+
+export interface PipelineActionPayload {
+  epicId: string;
+  epicTitle: string;
+  action: PipelineAction;
+  feedback?: string;
+}
+
 interface FleetBoardProps {
   issues: PlanIssue[];
   epicCosts?: Map<string, EpicCost>;
-  onLaunchAgent?: (epicId: string, epicTitle: string) => void;
+  onPipelineAction?: (payload: PipelineActionPayload) => void;
   agentRunning?: boolean;
 }
 
-export function FleetBoard({ issues, epicCosts, onLaunchAgent, agentRunning }: FleetBoardProps) {
+export function FleetBoard({ issues, epicCosts, onPipelineAction, agentRunning }: FleetBoardProps) {
   const apps = buildFleetApps(issues);
 
   const grouped = new Map<FleetStage, typeof apps>();
@@ -38,7 +55,7 @@ export function FleetBoard({ issues, epicCosts, onLaunchAgent, agentRunning }: F
           stage={stage}
           apps={grouped.get(stage) ?? []}
           epicCosts={epicCosts}
-          onLaunchAgent={onLaunchAgent}
+          onPipelineAction={onPipelineAction}
           agentRunning={agentRunning}
         />
       ))}

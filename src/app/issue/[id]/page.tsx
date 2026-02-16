@@ -10,6 +10,8 @@ import { useIssues } from "@/hooks/useIssues";
 import { useTokenUsage, useTokenUsageSummary } from "@/hooks/useTokenUsage";
 import { useResearchReport } from "@/hooks/useResearchReport";
 import { useIssueAction } from "@/hooks/useIssueAction";
+import { usePipelineAction } from "@/hooks/usePipelineAction";
+import type { PipelineActionType } from "@/hooks/usePipelineAction";
 import { buildFleetApps, computeEpicCosts } from "@/components/fleet/fleet-utils";
 import { ActivityTimeline } from "@/components/fleet/ActivityTimeline";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -320,6 +322,234 @@ function IssueActionButtons({ issueId, status, labels }: { issueId: string; stat
 }
 
 // ---------------------------------------------------------------------------
+// Pipeline stage detection (from epic labels)
+// ---------------------------------------------------------------------------
+
+type PipelineStage =
+  | "idea"
+  | "research"
+  | "research-complete"
+  | "development"
+  | "submission-prep"
+  | "submitted"
+  | "kit-management"
+  | "completed"
+  | "bad-idea";
+
+function detectPipelineStage(labels: string[]): PipelineStage {
+  if (labels.includes("pipeline:bad-idea")) return "bad-idea";
+  if (labels.includes("pipeline:completed")) return "completed";
+  if (labels.includes("pipeline:kit-management")) return "kit-management";
+  if (labels.includes("pipeline:submitted")) return "submitted";
+  if (labels.includes("pipeline:submission-prep")) return "submission-prep";
+  if (labels.includes("pipeline:development")) return "development";
+  if (labels.includes("pipeline:research-complete")) return "research-complete";
+  if (labels.includes("pipeline:research")) return "research";
+  return "idea";
+}
+
+// ---------------------------------------------------------------------------
+// Pipeline action buttons (for epics with pipeline:* labels)
+// ---------------------------------------------------------------------------
+
+function PipelineActionButtons({
+  epicId,
+  labels,
+}: {
+  epicId: string;
+  labels: string[];
+}) {
+  const mutation = usePipelineAction();
+  const [feedbackText, setFeedbackText] = useState("");
+  const [showFeedback, setShowFeedback] = useState<"more-research" | "send-back" | null>(null);
+
+  const stage = detectPipelineStage(labels);
+  const hasAgentRunning = labels.includes("agent:running");
+
+  const handleAction = (action: PipelineActionType, feedback?: string) => {
+    mutation.mutate(
+      { epicId, action, feedback },
+      {
+        onSuccess: () => {
+          setShowFeedback(null);
+          setFeedbackText("");
+        },
+      },
+    );
+  };
+
+  const renderFeedbackArea = (
+    action: PipelineActionType,
+    placeholder: string,
+    buttonLabel: string,
+  ) => (
+    <div className="space-y-2">
+      <textarea
+        value={feedbackText}
+        onChange={(e) => setFeedbackText(e.target.value)}
+        placeholder={placeholder}
+        rows={3}
+        className="w-full rounded-md border border-border-default bg-surface-2 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            setShowFeedback(null);
+            setFeedbackText("");
+          }
+        }}
+        autoFocus
+      />
+      <div className="flex gap-2">
+        <button
+          onClick={() => handleAction(action, feedbackText.trim() || undefined)}
+          disabled={mutation.isPending}
+          className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
+        >
+          {mutation.isPending ? "Sending..." : buttonLabel}
+        </button>
+        <button
+          onClick={() => {
+            setShowFeedback(null);
+            setFeedbackText("");
+          }}
+          className="rounded-md bg-surface-2 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-2">
+      {/* Ideas stage: Start Research */}
+      {stage === "idea" && (
+        <button
+          onClick={() => handleAction("start-research")}
+          disabled={mutation.isPending}
+          className="w-full rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
+        >
+          {mutation.isPending ? "Starting..." : "Start Research"}
+        </button>
+      )}
+
+      {/* In Research: Stop Agent (only if agent is running) */}
+      {stage === "research" && hasAgentRunning && (
+        <button
+          onClick={() => handleAction("stop-agent")}
+          disabled={mutation.isPending}
+          className="w-full rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50 transition-colors"
+        >
+          {mutation.isPending ? "Stopping..." : "Stop Agent"}
+        </button>
+      )}
+
+      {/* Research Complete: Send for Dev, More Research, Deprioritise */}
+      {stage === "research-complete" && (
+        <div className="space-y-2">
+          <button
+            onClick={() => handleAction("send-to-development")}
+            disabled={mutation.isPending}
+            className="w-full rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
+          >
+            {mutation.isPending ? "Sending..." : "Send for Development"}
+          </button>
+
+          {showFeedback !== "more-research" ? (
+            <button
+              onClick={() => setShowFeedback("more-research")}
+              disabled={mutation.isPending}
+              className="w-full rounded-md bg-surface-2 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-surface-3 border border-border-default disabled:opacity-50 transition-colors"
+            >
+              More Research
+            </button>
+          ) : (
+            renderFeedbackArea(
+              "more-research",
+              "What additional research is needed?",
+              "Send Feedback & Re-run Research",
+            )
+          )}
+
+          <button
+            onClick={() => handleAction("deprioritise")}
+            disabled={mutation.isPending}
+            className="w-full rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-white hover:bg-amber-500 disabled:opacity-50 transition-colors"
+          >
+            {mutation.isPending ? "Deprioritising..." : "Deprioritise"}
+          </button>
+        </div>
+      )}
+
+      {/* In Development: Stop Agent (only if agent is running) */}
+      {stage === "development" && hasAgentRunning && (
+        <button
+          onClick={() => handleAction("stop-agent")}
+          disabled={mutation.isPending}
+          className="w-full rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50 transition-colors"
+        >
+          {mutation.isPending ? "Stopping..." : "Stop Agent"}
+        </button>
+      )}
+
+      {/* Submission Prep: Approve Submission, Send back to Development */}
+      {stage === "submission-prep" && (
+        <div className="space-y-2">
+          <button
+            onClick={() => handleAction("approve-submission")}
+            disabled={mutation.isPending}
+            className="w-full rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
+          >
+            {mutation.isPending ? "Approving..." : "Approve Submission"}
+          </button>
+
+          {showFeedback !== "send-back" ? (
+            <button
+              onClick={() => setShowFeedback("send-back")}
+              disabled={mutation.isPending}
+              className="w-full rounded-md bg-surface-2 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-surface-3 border border-border-default disabled:opacity-50 transition-colors"
+            >
+              Send back to Development
+            </button>
+          ) : (
+            renderFeedbackArea(
+              "send-back-to-development",
+              "What needs to be fixed or changed?",
+              "Send Feedback & Restart Development",
+            )
+          )}
+        </div>
+      )}
+
+      {/* Submitted: Mark as Live */}
+      {stage === "submitted" && (
+        <button
+          onClick={() => handleAction("mark-as-live")}
+          disabled={mutation.isPending}
+          className="w-full rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
+        >
+          {mutation.isPending ? "Marking..." : "Mark as Live"}
+        </button>
+      )}
+
+      {/* Kit Management: Stop Agent (only if agent is running) */}
+      {stage === "kit-management" && hasAgentRunning && (
+        <button
+          onClick={() => handleAction("stop-agent")}
+          disabled={mutation.isPending}
+          className="w-full rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50 transition-colors"
+        >
+          {mutation.isPending ? "Stopping..." : "Stop Agent"}
+        </button>
+      )}
+
+      {mutation.isError && (
+        <p className="text-xs text-red-400">{mutation.error.message}</p>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page component
 // ---------------------------------------------------------------------------
 
@@ -348,10 +578,23 @@ export default function IssueDetailPage() {
   const issue = planIssue;
 
   // Research report — derive app name from epic title
+  // Show the research report for: (a) issues with the legacy "research" label,
+  // or (b) epics at any pipeline stage from research onward (where a report exists).
   const researchAppName = useMemo(() => {
     if (!issue) return null;
-    const isResearch = (rawIssue?.labels ?? issue.labels ?? []).includes("research");
-    if (!isResearch) return null;
+    const issueLabels = rawIssue?.labels ?? issue.labels ?? [];
+    const hasLegacyResearch = issueLabels.includes("research");
+    const hasPipelineResearch = issueLabels.some(
+      (l) =>
+        l === "pipeline:research" ||
+        l === "pipeline:research-complete" ||
+        l === "pipeline:development" ||
+        l === "pipeline:submission-prep" ||
+        l === "pipeline:submitted" ||
+        l === "pipeline:kit-management" ||
+        l === "pipeline:completed",
+    );
+    if (!hasLegacyResearch && !hasPipelineResearch) return null;
     // If this issue has an epic, use the epic title to derive app name
     if (issue.epic_title) return extractAppName(issue.epic_title);
     // If this IS an epic with research label, use its own title
@@ -654,8 +897,12 @@ export default function IssueDetailPage() {
               <StatusBadge status={issue.status} size="md" />
             </div>
 
-            {/* Action Buttons */}
-            <IssueActionButtons issueId={issue.id} status={issue.status} labels={labels} />
+            {/* Action Buttons — pipeline buttons for epics, legacy buttons otherwise */}
+            {issue.issue_type === "epic" || labels.some((l) => l.startsWith("pipeline:")) ? (
+              <PipelineActionButtons epicId={issue.id} labels={labels} />
+            ) : (
+              <IssueActionButtons issueId={issue.id} status={issue.status} labels={labels} />
+            )}
 
             {/* Priority */}
             <div>

@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { FleetBoard } from "@/components/fleet/FleetBoard";
+import type { PipelineActionPayload } from "@/components/fleet/FleetBoard";
 import { ActivityTimeline } from "@/components/fleet/ActivityTimeline";
 import { AgentStatusBanner } from "@/components/fleet/AgentStatusBanner";
 import { buildFleetApps, computeEpicCosts } from "@/components/fleet/fleet-utils";
@@ -9,38 +10,16 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { CardSkeleton } from "@/components/ui/LoadingSkeleton";
 import { useIssues } from "@/hooks/useIssues";
 import { useTokenUsage, useTokenUsageSummary } from "@/hooks/useTokenUsage";
-import { useAgentStatus, useAgentLaunch, useAgentStop } from "@/hooks/useAgent";
-import { useRepos } from "@/hooks/useRepos";
+import { useAgentStatus, useAgentStop } from "@/hooks/useAgent";
+import { usePipelineAction } from "@/hooks/usePipelineAction";
 
 export default function FleetPage() {
   const { data, isLoading, error, refetch } = useIssues();
   const { data: tokenData } = useTokenUsageSummary();
   const { data: tokenRecords } = useTokenUsage();
   const { data: agentStatus } = useAgentStatus();
-  const { data: repoStore } = useRepos();
-  const launchAgent = useAgentLaunch();
   const stopAgent = useAgentStop();
-
-  // Find a factory-type repo for launching research agents
-  const factoryRepoPath = useMemo(() => {
-    if (!repoStore?.repos) return null;
-    const factory = repoStore.repos.find((r) => r.name.includes("factory"));
-    return factory?.path ?? null;
-  }, [repoStore]);
-
-  const handleLaunchResearch = useCallback(
-    (epicId: string, epicTitle: string) => {
-      if (!factoryRepoPath) return;
-      launchAgent.mutate({
-        repoPath: factoryRepoPath,
-        prompt: `Research the app idea "${epicTitle}" (epic: ${epicId}). Follow the research workflow instructions in CLAUDE.md.`,
-        model: "sonnet",
-        maxTurns: 200,
-        allowedTools: "Bash,Read,Write,Edit,Glob,Grep,WebSearch,WebFetch",
-      });
-    },
-    [factoryRepoPath, launchAgent],
-  );
+  const pipelineAction = usePipelineAction();
 
   const allIssues = useMemo(() => data?.all_issues ?? [], [data]);
   const epicCount = useMemo(
@@ -69,13 +48,25 @@ export default function FleetPage() {
     return map;
   }, [allIssues]);
 
+  const handlePipelineAction = useCallback(
+    (payload: PipelineActionPayload) => {
+      // Look up current labels from issue data for label-aware actions
+      const epic = allIssues.find((i) => i.id === payload.epicId);
+      pipelineAction.mutate({
+        ...payload,
+        currentLabels: epic?.labels ?? [],
+      });
+    },
+    [allIssues, pipelineAction],
+  );
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-white">App Fleet</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            Factory pipeline — apps tracked as epics through build stages
+            Factory pipeline -- apps tracked as epics through build stages
           </p>
         </div>
         {data && (
@@ -111,10 +102,10 @@ export default function FleetPage() {
 
       {isLoading && (
         <div className="flex gap-4 overflow-x-auto flex-1 pb-4">
-          {Array.from({ length: 5 }).map((_, col) => (
+          {Array.from({ length: 9 }).map((_, col) => (
             <div
               key={col}
-              className="min-w-[280px] max-w-[320px] flex-shrink-0 space-y-2"
+              className="min-w-[260px] max-w-[300px] flex-shrink-0 space-y-2"
             >
               <div className="h-8 w-32 animate-pulse bg-surface-2 rounded mb-3" />
               {Array.from({ length: 2 }).map((_, row) => (
@@ -129,7 +120,7 @@ export default function FleetPage() {
         <FleetBoard
           issues={allIssues}
           epicCosts={epicCosts}
-          onLaunchAgent={factoryRepoPath ? handleLaunchResearch : undefined}
+          onPipelineAction={handlePipelineAction}
           agentRunning={agentStatus?.running ?? false}
         />
       )}
@@ -171,9 +162,7 @@ export default function FleetPage() {
             </h3>
             <p className="text-xs text-gray-500">
               Create an epic to track an app through the factory pipeline.
-              Children with &quot;research&quot;, &quot;development&quot;, or
-              &quot;submission:*&quot; labels will advance the app through
-              stages.
+              Add pipeline:* labels to move apps through stages.
             </p>
           </div>
         </div>

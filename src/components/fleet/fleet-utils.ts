@@ -4,42 +4,70 @@ import type { PlanIssue, IssueTokenSummary } from "@/lib/types";
 export type FleetStage =
   | "idea"
   | "research"
+  | "research-complete"
   | "development"
-  | "submission"
-  | "completed";
+  | "submission-prep"
+  | "submitted"
+  | "kit-management"
+  | "completed"
+  | "bad-idea";
 
 export const FLEET_STAGES: FleetStage[] = [
   "idea",
   "research",
+  "research-complete",
   "development",
-  "submission",
+  "submission-prep",
+  "submitted",
+  "kit-management",
   "completed",
+  "bad-idea",
 ];
 
 export const FLEET_STAGE_CONFIG: Record<
   FleetStage,
   { label: string; color: string; dotColor: string }
 > = {
-  idea: { label: "Idea", color: "text-gray-400", dotColor: "bg-gray-400" },
+  idea: { label: "Ideas", color: "text-gray-400", dotColor: "bg-gray-400" },
   research: {
-    label: "Research",
+    label: "In Research",
     color: "text-blue-400",
     dotColor: "bg-blue-400",
   },
+  "research-complete": {
+    label: "Research Complete",
+    color: "text-cyan-400",
+    dotColor: "bg-cyan-400",
+  },
   development: {
-    label: "Development",
+    label: "In Development",
     color: "text-amber-400",
     dotColor: "bg-amber-400",
   },
-  submission: {
-    label: "Submission",
+  "submission-prep": {
+    label: "Prepare for Submission",
+    color: "text-orange-400",
+    dotColor: "bg-orange-400",
+  },
+  submitted: {
+    label: "Submitted",
     color: "text-purple-400",
     dotColor: "bg-purple-400",
+  },
+  "kit-management": {
+    label: "Kit Management",
+    color: "text-indigo-400",
+    dotColor: "bg-indigo-400",
   },
   completed: {
     label: "Completed",
     color: "text-green-400",
     dotColor: "bg-green-400",
+  },
+  "bad-idea": {
+    label: "Bad Ideas",
+    color: "text-red-400",
+    dotColor: "bg-red-400",
   },
 };
 
@@ -51,27 +79,53 @@ export interface FleetApp {
 }
 
 /**
- * Determine which pipeline stage an epic is in based on its children's labels and statuses.
+ * Check whether an epic has the `agent:running` label.
+ */
+export function isAgentRunning(epic: PlanIssue): boolean {
+  return epic.labels?.includes("agent:running") ?? false;
+}
+
+/**
+ * Determine which pipeline stage an epic is in.
  *
- * Priority (highest active stage wins):
- * 1. Completed — epic is closed
- * 2. Submission — any child has a submission:* label and is not closed
- * 3. Development — any non-closed child has "development" label
- * 4. Research — any non-closed child has "research" label
- * 5. Idea — default (new epic, no matching children)
+ * Primary detection: reads `pipeline:*` labels on the epic itself.
+ * Priority order ensures the most advanced stage wins if multiple labels
+ * are present (which should not happen, but provides a safe fallback).
+ *
+ * Fallback: if no `pipeline:*` labels exist, uses the legacy child-based
+ * detection for backward compatibility with existing epics that predate
+ * the pipeline label convention.
  */
 export function detectStage(
   epic: PlanIssue,
   children: PlanIssue[],
 ): FleetStage {
+  const labels = epic.labels ?? [];
+
+  // --- Primary: pipeline labels on the epic ---
+  const hasPipelineLabel = labels.some((l) => l.startsWith("pipeline:"));
+
+  if (hasPipelineLabel) {
+    if (labels.includes("pipeline:bad-idea")) return "bad-idea";
+    if (labels.includes("pipeline:completed")) return "completed";
+    if (labels.includes("pipeline:kit-management")) return "kit-management";
+    if (labels.includes("pipeline:submitted")) return "submitted";
+    if (labels.includes("pipeline:submission-prep")) return "submission-prep";
+    if (labels.includes("pipeline:development")) return "development";
+    if (labels.includes("pipeline:research-complete")) return "research-complete";
+    if (labels.includes("pipeline:research")) return "research";
+  }
+
+  // --- Fallback: closed epic without pipeline label ---
   if (epic.status === "closed") return "completed";
 
+  // --- Fallback: legacy child-based detection ---
   const activeChildren = children.filter((c) => c.status !== "closed");
 
   const hasSubmission = activeChildren.some(
     (c) => c.labels?.some((l) => l.startsWith("submission:")) ?? false,
   );
-  if (hasSubmission) return "submission";
+  if (hasSubmission) return "submitted";
 
   const hasDevelopment = activeChildren.some(
     (c) => c.labels?.includes("development") ?? false,
@@ -109,12 +163,13 @@ export interface EpicCost {
 
 /**
  * Determine the phase of an issue based on its labels.
- * Returns "research", "development", "submission", or "other".
+ * Returns "research", "development", "submission", "kit-management", or "other".
  */
 function classifyPhase(issue: PlanIssue): string {
-  if (issue.labels?.some((l) => l.startsWith("submission:"))) return "submission";
-  if (issue.labels?.includes("development")) return "development";
-  if (issue.labels?.includes("research")) return "research";
+  if (issue.labels?.some((l) => l.startsWith("submission:") || l === "pipeline:submitted" || l === "pipeline:submission-prep")) return "submission";
+  if (issue.labels?.includes("development") || issue.labels?.includes("pipeline:development")) return "development";
+  if (issue.labels?.includes("research") || issue.labels?.some((l) => l.startsWith("pipeline:research"))) return "research";
+  if (issue.labels?.includes("pipeline:kit-management")) return "kit-management";
   return "other";
 }
 
@@ -171,7 +226,7 @@ export function computeEpicCosts(
 
     if (totalCost > 0 || totalSessions > 0) {
       // Sort phases in pipeline order
-      const phaseOrder = ["research", "development", "submission", "other"];
+      const phaseOrder = ["research", "development", "submission", "kit-management", "other"];
       const phases = phaseOrder
         .filter((p) => phaseMap.has(p))
         .map((p) => phaseMap.get(p)!);

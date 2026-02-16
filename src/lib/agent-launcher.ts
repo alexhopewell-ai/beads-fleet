@@ -1,9 +1,12 @@
 // =============================================================================
-// Beads Web — Generic Agent Launcher
+// Beads Web -- Generic Agent Launcher
 // =============================================================================
 //
 // Spawns Claude Code CLI as a background subprocess to run autonomous tasks
 // in any configured beads-enabled repo. Tracks running processes by PID.
+//
+// Extended for pipeline integration: tracks epicId and pipelineStage so that
+// label transitions can be applied when the agent exits.
 // =============================================================================
 
 import { spawn, type ChildProcess } from "child_process";
@@ -23,6 +26,8 @@ export interface AgentSession {
   model: string;
   startedAt: string;
   logFile: string;
+  epicId?: string;
+  pipelineStage?: string;
 }
 
 export interface LaunchOptions {
@@ -32,16 +37,33 @@ export interface LaunchOptions {
   model?: string;
   maxTurns?: number;
   allowedTools?: string;
+  epicId?: string;
+  pipelineStage?: string;
 }
 
 // ---------------------------------------------------------------------------
-// State — in-memory singleton (process lifetime)
+// State -- in-memory singleton (process lifetime)
 // ---------------------------------------------------------------------------
 
 let activeSession: AgentSession | null = null;
 let activeProcess: ChildProcess | null = null;
 
 const LOG_DIR = path.join(os.tmpdir(), "beads-web-agent-logs");
+
+// ---------------------------------------------------------------------------
+// Pipeline stage transitions
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps the pipeline stage the agent was launched for to the next stage
+ * label that should be applied when the agent exits successfully.
+ */
+const NEXT_STAGE: Record<string, string> = {
+  research: "pipeline:research-complete",
+  development: "pipeline:submission-prep",
+  "submission-prep": "pipeline:submitted",
+  "kit-management": "pipeline:completed",
+};
 
 // ---------------------------------------------------------------------------
 // Ensure log directory exists
@@ -115,16 +137,41 @@ export async function launchAgent(options: LaunchOptions): Promise<AgentSession>
     model,
     startedAt: new Date().toISOString(),
     logFile,
+    epicId: options.epicId,
+    pipelineStage: options.pipelineStage,
   };
 
   activeSession = session;
   activeProcess = child;
 
-  // Clean up when process exits
-  child.on("exit", () => {
-    if (activeSession?.pid === child.pid) {
+  // Clean up when process exits and handle pipeline label transitions
+  child.on("exit", async (exitCode) => {
+    const exitedSession = activeSession;
+    if (exitedSession?.pid === child.pid) {
       activeSession = null;
       activeProcess = null;
+
+      // Perform pipeline label transitions if epicId and pipelineStage are set
+      if (exitedSession.epicId && exitedSession.pipelineStage) {
+        try {
+          const { addLabelsToEpic, removeLabelsFromEpic } = await import("./pipeline-labels");
+
+          // Always remove agent:running
+          await removeLabelsFromEpic(exitedSession.epicId, ["agent:running"]);
+
+          // If the agent exited cleanly (code 0), advance to next stage
+          const nextStage = NEXT_STAGE[exitedSession.pipelineStage];
+          if (exitCode === 0 && nextStage) {
+            const currentLabel = `pipeline:${exitedSession.pipelineStage}`;
+            await removeLabelsFromEpic(exitedSession.epicId, [currentLabel]);
+            await addLabelsToEpic(exitedSession.epicId, [nextStage]);
+          }
+          // If non-zero exit, the pipeline label stays at the current stage
+          // (card stays in the same column with no agent indicator)
+        } catch (err) {
+          console.error("Failed to update pipeline labels on agent exit:", err);
+        }
+      }
     }
     writableLog.end();
     logStream.close();

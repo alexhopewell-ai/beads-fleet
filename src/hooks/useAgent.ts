@@ -8,6 +8,8 @@ interface LaunchParams {
   model?: string;
   maxTurns?: number;
   allowedTools?: string;
+  epicId?: string;
+  pipelineStage?: string;
 }
 
 export function useAgentStatus() {
@@ -41,6 +43,7 @@ export function useAgentLaunch() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agent-status"] });
+      queryClient.invalidateQueries({ queryKey: ["issues"] });
     },
   });
 }
@@ -63,6 +66,8 @@ export function useAgentStop() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agent-status"] });
+      queryClient.invalidateQueries({ queryKey: ["issues"] });
     },
   });
 }
+

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { launchAgent, getAgentStatus, stopAgent } from "@/lib/agent-launcher";
 import { getAllRepoPaths, getRepos } from "@/lib/repo-config";
+import { addLabelsToEpic, removeLabelsFromEpic } from "@/lib/pipeline-labels";
+import { invalidateCache } from "@/lib/bv-client";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * GET /api/agent — Get current agent status
+ * GET /api/agent -- Get current agent status
  */
 export async function GET() {
   try {
@@ -19,10 +21,12 @@ export async function GET() {
 }
 
 /**
- * POST /api/agent — Launch or stop an agent
+ * POST /api/agent -- Launch or stop an agent
  *
  * Body for launch:
- *   { action: "launch", repoPath: string, prompt: string, model?: string, maxTurns?: number, allowedTools?: string }
+ *   { action: "launch", repoPath: string, prompt: string, model?: string,
+ *     maxTurns?: number, allowedTools?: string, epicId?: string,
+ *     pipelineStage?: string }
  *
  * Body for stop:
  *   { action: "stop" }
@@ -39,6 +43,17 @@ export async function POST(request: NextRequest) {
 
   if (action === "stop") {
     try {
+      // If we have an epicId, remove the agent:running label
+      const { epicId, repoPath: stopRepoPath } = body;
+      if (epicId && typeof epicId === "string") {
+        const factoryPath = typeof stopRepoPath === "string" ? stopRepoPath : undefined;
+        try {
+          await removeLabelsFromEpic(epicId, ["agent:running"], factoryPath);
+          invalidateCache();
+        } catch {
+          // Label removal failure should not block the stop
+        }
+      }
       const result = await stopAgent();
       return NextResponse.json(result);
     } catch (error: unknown) {
@@ -48,7 +63,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "launch") {
-    const { repoPath, prompt, model, maxTurns, allowedTools } = body;
+    const { repoPath, prompt, model, maxTurns, allowedTools, epicId, pipelineStage } = body;
 
     if (!repoPath || typeof repoPath !== "string") {
       return NextResponse.json({ error: "Missing repoPath" }, { status: 400 });
@@ -70,6 +85,23 @@ export async function POST(request: NextRequest) {
     const store = await getRepos();
     const repo = store.repos.find((r) => r.path === repoPath);
 
+    // If epicId and pipelineStage are provided, manage labels on the epic
+    if (epicId && typeof epicId === "string" && pipelineStage && typeof pipelineStage === "string") {
+      try {
+        // Find the factory repo for label management (the repo containing the epic)
+        const factoryRepo = store.repos.find((r) => r.name.includes("factory"));
+        const factoryPath = factoryRepo?.path;
+
+        // Add pipeline stage label and agent:running
+        const labelsToAdd = [`pipeline:${pipelineStage}`, "agent:running"];
+        await addLabelsToEpic(epicId, labelsToAdd, factoryPath);
+        invalidateCache();
+      } catch (err) {
+        // Log but don't block agent launch
+        console.error("Failed to update epic labels:", err);
+      }
+    }
+
     try {
       const session = await launchAgent({
         repoPath,
@@ -78,6 +110,8 @@ export async function POST(request: NextRequest) {
         model: typeof model === "string" ? model : undefined,
         maxTurns: typeof maxTurns === "number" ? maxTurns : undefined,
         allowedTools: typeof allowedTools === "string" ? allowedTools : undefined,
+        epicId: typeof epicId === "string" ? epicId : undefined,
+        pipelineStage: typeof pipelineStage === "string" ? pipelineStage : undefined,
       });
       return NextResponse.json({ launched: true, session });
     } catch (error: unknown) {
