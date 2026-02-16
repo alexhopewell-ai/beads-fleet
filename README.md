@@ -1,6 +1,7 @@
 # Beads Fleet
 
 **A browser-based dashboard for managing fleets of software development through an orchestrated pipeline all backed by [Beads](https://github.com/steveyegge/beads) issue tracker.**
+**Gastown was overkill for my needs so I built something simpler. This is the front end to my factory with a clear api which allows you to build a factory for your needs.**
 
 [![CI](https://github.com/jmcy9999/beads-web/actions/workflows/ci.yml/badge.svg)](https://github.com/jmcy9999/beads-web/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
