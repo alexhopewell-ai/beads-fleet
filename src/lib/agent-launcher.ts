@@ -147,7 +147,7 @@ export async function launchAgent(options: LaunchOptions): Promise<AgentSession>
   // Clean up when process exits and handle pipeline label transitions
   child.on("exit", async (exitCode) => {
     const exitedSession = activeSession;
-    if (exitedSession?.pid === child.pid) {
+    if (exitedSession != null && exitedSession.pid === child.pid) {
       activeSession = null;
       activeProcess = null;
 
