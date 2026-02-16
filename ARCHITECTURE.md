@@ -244,12 +244,17 @@ Or add it directly to `~/.beads-web.json`:
 - Factory agent labels issues via `bd label add <id> submission:ready` etc.
 
 ### App Fleet Dashboard
-- **Pipeline view:** Epics displayed as "apps" in a factory pipeline kanban with 5 stages: Idea | Research | Development | Submission | Completed
-- **Stage detection:** Automatic based on children's labels — `research` label = Research stage, `development` label = Development stage, `submission:*` labels = Submission stage, epic closed = Completed, default = Idea. Highest active stage wins; closed children are ignored.
-- **Fleet cards:** Each app shows epic title, progress bar (closed/total children), priority, active/blocked task counts, submission status badges, and owner
+- **Pipeline view:** Epics displayed as "apps" in a factory pipeline kanban with 9 stages: Ideas | Research | Research Complete | Development | Submission Prep | Submitted | Kit Management | Completed | Bad Ideas
+- **Compact layout:** Columns are 180-220px wide with tight gaps (gap-2), small card padding (p-2), 10px IDs, xs-size titles, uppercase column headers — optimized for fitting all stages on screen
+- **Stage detection:** Automatic based on `pipeline:*` labels on epics — `pipeline:idea`, `pipeline:research`, `pipeline:research-complete`, `pipeline:development`, `pipeline:submission-prep`, `pipeline:submitted`, `pipeline:kit-management`, `pipeline:completed`, `pipeline:bad-idea`
+- **Fleet cards:** Each app shows epic title, progress bar (closed/total children), priority, active/blocked task counts, submission status badges, cost breakdown by phase, phase history dots, stage-specific action buttons, and owner
+- **Zoom controls:** User-controlled CSS transform scaling (50%-150%) via magnifying glass +/-/reset buttons in the toolbar. Uses `transform: scale(X)` with `transformOrigin: "top left"` and compensating `width: ${100/scale}%`
+- **Column filter:** Funnel icon dropdown with checkboxes for each pipeline stage. Toggle individual columns on/off (minimum one must remain visible). "Show all" link when filtered. Filter state persisted in localStorage (`beads-fleet-visible-columns`). Funnel icon turns blue when columns are hidden
+- **Pipeline actions:** Stage-specific action buttons on each card — Start Research (idea), Stop Agent (research/development/kit-management when agent running), Send for Development / More Research / Deprioritise (research-complete), Approve Submission / Send back to Dev (submission-prep), Mark as Live (submitted). Actions dispatched via `onPipelineAction` callback to the fleet page
+- **Phase history:** Each card shows a row of colored dots representing all pipeline stages — past stages solid, current stage pulsing, future stages dimmed
 - **Empty state:** Guidance on how to create epics and label children to use the fleet view
 - **Navigation:** Sidebar link + keyboard shortcut `f`
-- **Components:** `FleetBoard` -> `FleetColumn` -> `FleetCard`, with `fleet-utils.ts` for stage detection and fleet data extraction
+- **Components:** `FleetBoard` (client component with zoom/filter state) -> `FleetColumn` -> `FleetCard`, with `fleet-utils.ts` for stage detection, fleet data extraction, and phase history
 
 ### Research Completion Signals (Polling API)
 - **`GET /api/signals`** — Polling endpoint for detecting issue state changes
@@ -289,6 +294,13 @@ Or add it directly to `~/.beads-web.json`:
 - **Launch params:** `repoPath`, `prompt`, `model` (default: sonnet), `maxTurns` (default: 200), `allowedTools` (default: common tools)
 - **Process management:** Detached process (`child.unref()`) survives API restarts. Stop sends `SIGTERM` to process group. On exit, session state auto-clears.
 - **Logs:** Written to `$TMPDIR/beads-web-agent-logs/agent-<repo>-<timestamp>.log`. Status endpoint returns last 2KB of log.
+
+### Collapsible Sidebar
+- **Toggle:** Double chevron button at the bottom of the sidebar toggles between expanded (w-64) and collapsed (w-16) states
+- **Collapsed mode:** Icon-only navigation with tooltip titles on each nav link. Brand text, nav labels, version text, and bv status text are hidden
+- **Smooth animation:** CSS `transition-all duration-200` for width change
+- **Logo:** Always visible in both states (icon only in collapsed mode)
+- **Tests:** 17 tests in `__tests__/components/Sidebar.test.tsx` covering expanded state, collapsed state, toggle round-trip, and logo visibility
 
 ### System Health & Setup
 - Health check: bv CLI availability, project path validity
@@ -337,7 +349,7 @@ bv CLI (--robot-plan/insights/priority/diff)                            │
 |-------|------|---------------|
 | `/` | Dashboard | Summary cards (open/in_progress/blocked/closed counts), token usage totals, highest-impact issue, priority misalignment alerts, full issue table with sort/filter, recent activity feed |
 | `/board` | Kanban Board | Issues grouped by status columns (open, in_progress, blocked, closed), click-to-open detail panel |
-| `/fleet` | App Fleet | Factory pipeline kanban — epics as apps in Idea/Research/Development/Submission/Completed stages |
+| `/fleet` | App Fleet | Factory pipeline kanban — epics as apps across 9 stages (Ideas through Completed), with zoom controls, column filter, and pipeline action buttons |
 | `/insights` | Graph Analytics | Bottlenecks, keystones, influencers, hubs, authorities (top-5 bar charts), dependency cycles, graph density, interactive ReactFlow dependency graph |
 | `/diff` | Time Travel | Compare current state against a git ref (HEAD~1/5/10/20 or custom), shows new/closed/modified/reopened issues with field-level diffs |
 | `/settings` | Settings | Add/remove/switch repos, stored in `~/.beads-web.json` |
@@ -429,6 +441,7 @@ All TypeScript types:
 | `useAgentStatus()` | GET `/api/agent` | 5s (while agent may be running) |
 | `useAgentLaunch()` | POST `/api/agent` (launch) | invalidates agent-status |
 | `useAgentStop()` | POST `/api/agent` (stop) | invalidates agent-status |
+| `usePipelineAction()` | POST `/api/issues/[id]/action` | Pipeline stage transitions (start-research, send-for-development, etc.) |
 | `useKeyboardShortcuts()` | -- | d/b/f/i/t/s navigation, / search, ? help |
 
 ## Component Tree
@@ -437,7 +450,7 @@ All TypeScript types:
 layout.tsx (server)
   QueryProvider
     ClientShell (ErrorBoundary + SetupWizard + ShortcutsHelp)
-      Sidebar (nav links, RepoSelector, health indicator)
+      Sidebar (collapsible: nav links, RepoSelector, health indicator; collapsed = icon-only with tooltips)
       Header (breadcrumb with project selector dropdown)
       <main> (page content)
 ```
@@ -445,7 +458,7 @@ layout.tsx (server)
 ### Key Components
 - **Dashboard:** `SummaryCards`, `TokenUsageSummary`, `WhatsNext`, `PriorityAlerts`, `IssueTable` (with `FilterBar`), `ActivityFeed`
 - **Board:** `KanbanBoard` -> `KanbanColumn` -> `IssueCard`, `IssueDetailPanel` (slide-in)
-- **Fleet:** `FleetBoard` -> `FleetColumn` -> `FleetCard`, `AgentStatusBanner` (running agent indicator), `ActivityTimeline` (agent session visualization), `fleet-utils.ts` (stage detection + data extraction), `timeline-utils.ts` (timeline data processing)
+- **Fleet:** `FleetBoard` (client component: zoom controls, column filter, compact layout) -> `FleetColumn` (compact 180-220px, uppercase headers) -> `FleetCard` (compact p-2, pipeline actions, phase history dots, cost breakdown), `AgentStatusBanner` (running agent indicator), `ActivityTimeline` (agent session visualization), `fleet-utils.ts` (stage detection, data extraction, phase history), `timeline-utils.ts` (timeline data processing)
 - **Insights:** `MetricPanel` (bar charts), `CyclesPanel`, `GraphDensityBadge`, `DependencyGraph` (ReactFlow)
 - **Filters:** `FilterBar`, `RecipeSelector`
 - **UI primitives:** `StatusBadge`, `PriorityIndicator`, `IssueTypeIcon`, `SummaryCard`, `IssueCard` (row/card variants), `EmptyState`, `ErrorState`, `LoadingSkeleton`
@@ -562,16 +575,20 @@ src/
     useTokenUsage.ts        # Token usage hooks
     useResearchReport.ts    # Research report fetcher
     useAgent.ts             # Agent launch/stop/status hooks
+    usePipelineAction.ts    # Fleet pipeline stage transition mutation
     useKeyboardShortcuts.ts # Keyboard navigation
   components/
     providers/              # QueryProvider, ClientShell
     layout/                 # Sidebar, Header
     dashboard/              # SummaryCards, WhatsNext, PriorityAlerts, IssueTable, ActivityFeed, TokenUsageSummary
     board/                  # KanbanBoard, KanbanColumn, IssueDetailPanel
-    fleet/                  # FleetBoard, FleetColumn, FleetCard, ActivityTimeline, fleet-utils, timeline-utils
+    fleet/                  # FleetBoard, FleetColumn, FleetCard, AgentStatusBanner, ActivityTimeline, fleet-utils, timeline-utils
     insights/               # MetricPanel, CyclesPanel, GraphDensityBadge, DependencyGraph
     filters/                # FilterBar, RecipeSelector
     ui/                     # StatusBadge, PriorityIndicator, IssueTypeIcon, SummaryCard, IssueCard, EmptyState, ErrorState, LoadingSkeleton, ErrorBoundary, ShortcutsHelp, SetupWizard
+__tests__/
+  components/
+    Sidebar.test.tsx        # 17 tests for collapsible sidebar
 scripts/
   hooks/
     beads-collect-tokens.sh   # Stop hook: token usage collection (canonical copy)
